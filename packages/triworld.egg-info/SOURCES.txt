@@ -1,0 +1,7 @@
+README.md
+pyproject.toml
+packages/triworld.egg-info/PKG-INFO
+packages/triworld.egg-info/SOURCES.txt
+packages/triworld.egg-info/dependency_links.txt
+packages/triworld.egg-info/requires.txt
+packages/triworld.egg-info/top_level.txt

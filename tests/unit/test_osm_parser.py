@@ -9,11 +9,11 @@ def test_parse_osm():
     network = parse_osm(fixture_path)
     assert len(network.segments) == 1
     segment = network.segments[0]
-    assert segment.id == "10"
-    assert len(segment.centerline) == 2
-    assert segment.centerline[0] == (0.0, 0.0)
-    assert segment.centerline[1] == (0.001, 0.0)
-    assert segment.roadWidthMetres == 3.25
+    assert segment.id == "road_10"
+    assert len(segment.centerlineLocalM) == 2
+    assert segment.centerlineLocalM[0] == [0.0, 0.0]
+    assert segment.centerlineLocalM[1] == [0.001, 0.0]
+    assert segment.widthM.total == 7.0
 
 if __name__ == "__main__":
     test_parse_osm()

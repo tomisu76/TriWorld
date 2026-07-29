@@ -1,103 +1,63 @@
 # Implementation Status
 
-## Overview
-**Repository:** C:\TriWorld  
-**Branch:** audit-and-evidence  
-**Commit:** (uncommitted - working tree has new docs/adr/ files)  
-**Dirty/Untracked Files Preserved:** All existing user files (.hermes.md, HERMES_START_HERE.md, HERMES_TRIWORLD_MASTER_PROMPT_2026.md, README.md, RESEARCH.md, docs/, fixtures/, packages/, pyproject.toml, test_output.net.xml, tests/)
+**Repository:** C:\TriWorld
+**Branch:** audit-and-evidence
+**Last Commit:** 5b6c199 - Phase 0: Audit, evidence, ADRs, toolchain lock
+**Dirty/Untracked Files:** None (all committed)
 
-## Detected Toolchain
+## Toolchain Detection
 
-| Tool | Version | Status |
-|------|---------|--------|
-| Python | 3.11.11 (primary), 3.12.8 (available) | ✅ |
-| pip | 26.0.1 | ✅ |
-| uv | Not in PATH | ❌ |
-| Node.js | 24.13.1 | ✅ |
-| npm | 11.10.1 | ✅ |
-| SUMO | 1.27.1 | ✅ |
-| netconvert | 1.27.1 | ✅ |
-| GDAL | Not installed | ❌ |
-| PROJ | Not installed | ❌ |
-| Blender | 3.6.5 (C:\Program Files\Blender Foundation\Blender 3.6) | ⚠️ Old version |
-| BeamNG.drive | 0.38.6.0 (build 19963) | ✅ |
-| BeamNG User Path | C:\Users\tomisu\AppData\Local\BeamNG\BeamNG.drive\current\ | ✅ |
-| Italy Map | Present at content/levels/italy.zip | ✅ |
+| Tool | Status | Version | Notes |
+|------|--------|---------|-------|
+| Python | ✅ | 3.11.11 / 3.12.8 | Primary / uv target |
+| pip | ✅ | 26.0.1 | |
+| uv | ❌ | — | Not installed |
+| Node.js | ✅ | 24.13.1 | |
+| npm | ✅ | 11.10.1 | |
+| SUMO | ✅ | 1.27.1 | netconvert, duarouter available |
+| netconvert | ✅ | 1.27.1 | |
+| netcheck.py | ✅ | 1.27.1 | In SUMO tools |
+| duarouter | ✅ | 1.27.1 | |
+| GDAL | ❌ | — | Not installed |
+| PROJ | ❌ | — | Not installed |
+| Blender | ❌ | — | Not installed (3.6.5 found but not in PATH) |
+| BeamNG.drive | ✅ | 0.38.6.0.19963 | Steam install at C:\Program Files (x86)\Steam\steamapps\common\BeamNG.drive |
+| Italy map | ✅ | — | Present at content/levels/italy.zip |
+| Road Architect | ✅ | — | Present in BeamNG install |
 
-## Hermes Configuration
-- **Web Backend:** Nous subscription (Firecrawl, FAL, OpenAI TTS/Whisper, Browser Use)
-- **Delegation:** max_concurrent_children=3, max_spawn_depth=1, orchestrator_enabled=true
-- **NotebookLM:** Disabled (no Enterprise project configured)
+## Web & Delegation
 
-## Documentation Created (Phase 0)
+| Component | Status | Backend |
+|-----------|--------|---------|
+| Web Search | ✅ | Nous subscription (Firecrawl) |
+| Web Extract | ✅ | Nous subscription |
+| Delegation | ✅ | max_concurrent_children=3, max_spawn_depth=1, orchestrator_enabled=true |
+| NotebookLM | Disabled | No Gemini Notebook Enterprise project provided |
 
-### Core Docs
-- ✅ `docs/implementation-status.md` (this file)
-- ✅ `docs/research/environment-report.md`
-- ✅ `docs/research/evidence-ledger.md`
-- ✅ `docs/research/version-lock.md`
-- ✅ `artifacts/environment/environment-report.json`
+## Phase Progress
 
-### ADRs (Architecture Decision Records)
-- ✅ `docs/adr/0001-canonical-world-road-terrain-mesh-ir.md`
-- ✅ `docs/adr/0002-local-map-frame-and-crs.md`
-- ✅ `docs/adr/0003-sumo-authority-boundary.md`
-- ✅ `docs/adr/0004-terrain-representation-and-vertical-datum.md`
-- ✅ `docs/adr/0005-beamng-target-and-road-architect-boundary.md`
-- ✅ `docs/adr/0006-portable-vs-stock-dependent-assets.md`
-- ✅ `docs/adr/0007-deterministic-builds-and-provenance.md`
-- ✅ `docs/adr/0008-runtime-qa.md`
-- ✅ `docs/adr/0009-local-job-queue-and-recovery.md`
-- ✅ `docs/adr/0010-security-and-trust-boundaries.md`
-
-### Operations
-- ✅ `docs/operations/risk_register.md` (20 risks, top 10 identified)
-- ✅ `docs/operations/state_machine.md` (16 stages with weights)
-- ✅ `docs/operations/test_matrix.md` (unit, property, synthetic, integration, UI, runtime QA, performance)
-
-## First Vertical-Slice Milestone
-**Phase 2: Synthetic Canary BeamNG Level**
-- Flat terrain (256×256m)
-- One straight road (500m, 7m wide)
-- One TSStatic road chunk (DAE)
-- One AI DecalRoad
-- One spawn point
-- One material (asphalt)
-- Deterministic ZIP
-- **Gate:** Structural audit + Runtime load-and-drive test
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 0 | Repository & evidence rules, toolchain report, docs skeleton, CI skeleton | ✅ **Complete** |
+| 1 | Contracts & deterministic infrastructure (Pydantic schemas, job workspace, state machine, SQLite) | 🔄 **Next** |
+| 2 | Synthetic canary BeamNG level (flat terrain, straight road, AI, spawn, material, ZIP) | ⏳ Pending |
+| 3 | Real spatial acquisition (OSM resolver/cache, DEM resolver/cache, MapFrame, provenance) | ⏳ Pending |
+| 4 | RoadNetworkIR & SUMO (OSM parser, topology, SUMO adapter, mapping) | ⏳ Pending |
+| 5 | Civil road solver (horizontal cleaner, network vertical QP, station frames, cross-sections, junction patches) | ⏳ Pending |
+| 6 | Road-first terrain (atomic formation, cut/fill, blend, TerrainIR) | ⏳ Pending |
+| 7 | BeamNG compiler (.ter, DAE chunks, TSStatic, materials, AI roads, metadata, preview, ZIP) | ⏳ Pending |
+| 8 | User application (wizard, live progress, preview, reports, download/install) | ⏳ Pending |
+| 9 | Italy-like systems (layered roads, edge blends, markings, asset registry, buildings/vegetation/water, LOD/collision budgets) | ⏳ Pending |
+| 10 | Blender & Road Architect (Blender QA, optional MCP guide, RA session, exact-version adapter, save/reload proof) | ⏳ Pending |
+| 11 | Release (reference real map, all reports, installation docs, changelog, local release commit) | ⏳ Pending |
 
 ## Current Blockers
 
-| Blocker | Severity | Resolution |
-|---------|----------|------------|
-| GDAL/PROJ not installed | High | Install via conda-forge/Pixi or OSGeo4W |
-| Blender 3.6.5 (not 4.5 LTS) | Medium | Install Blender 4.5 LTS, verify Collada |
-| uv not installed | Medium | `pip install uv` or use conda |
-| No pyproject.toml with dependencies | High | Create full pyproject.toml with all packages |
+1. **uv not installed** — Need `pip install uv` or installer script
+2. **GDAL/PROJ not installed** — Need conda-forge/Pixi environment or OSGeo4W
+3. **Blender not in PATH** — Install Blender 4.5 LTS and add to PATH
+4. **Python 3.12 not pinned** — Need `uv python pin 3.12` after uv install
 
 ## Next Concrete Action
-1. Install GDAL/PROJ via Pixi/conda-forge environment
-2. Install Blender 4.5 LTS
-3. Install uv
-4. Create complete `pyproject.toml` with all package definitions
-5. Run `uv python pin 3.12` and `uv sync --all-groups`
-6. Create `packages/contracts` with Pydantic schemas (MapFrame, WorldIR, RoadNetworkIR, etc.)
-7. Build synthetic canary (Phase 2)
 
-## Evidence State Summary
-
-| Claim | State |
-|-------|-------|
-| Python 3.11/3.12 available | ✅ runtime verified |
-| Node 24.13.1 available | ✅ runtime verified |
-| SUMO 1.27.1 with GDAL support | ✅ runtime verified |
-| BeamNG 0.38.6.0.19963 installed | ✅ runtime verified |
-| Italy map present | ✅ filesystem verified |
-| Blender 3.6.5 installed | ✅ runtime verified (but old) |
-| GDAL/PROJ available | ❌ not installed |
-| uv available | ❌ not installed |
-| DecalRoad width = half vs full | not yet proven |
-| .ter binary format exact spec | not yet proven |
-| SUMO netOffset sign convention | not yet proven |
-| Deterministic ZIP achievable | not yet proven |
-| Runtime QA passes | not yet proven |
+Install uv, pin Python 3.12, create conda-forge/Pixi environment for GDAL/PROJ/rasterio/pyproj, install Blender 4.5 LTS, then proceed with Phase 1: Pydantic contracts, job queue, state machine, and Phase 2: synthetic canary.
