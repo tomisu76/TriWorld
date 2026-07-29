@@ -20,14 +20,26 @@ from .road_ir import (
     SourceRef,
 )
 
-from .terrain_ir import TerrainIR
+from .civil_ir import (
+    CivilRoadIR,
+    Corridor,
+    StationFrame,
+    JunctionPatch,
+    BridgeDeck,
+    TunnelPolicy,
+    EarthworkCorridor,
+)
 
-from .mesh_ir import MeshIR, Submesh
-
-from .beamng_target_ir import (
-    BeamNGTargetIR,
+from .terrain_mesh_beamng import (
+    TerrainIR,
+    DemArtifact,
+    VerticalDatumType,
+    MeshIR,
+    Submesh,
     TSStaticItem,
     DecalRoadItem,
+    TerrainBlockItem,
+    BeamNGTargetIR,
 )
 
 from .job_state import (
@@ -56,15 +68,24 @@ __all__ = [
     "LaneConfig",
     "WidthConfig",
     "SourceRef",
-    # Terrain IR
+    # Civil IR
+    "CivilRoadIR",
+    "Corridor",
+    "StationFrame",
+    "JunctionPatch",
+    "BridgeDeck",
+    "TunnelPolicy",
+    "EarthworkCorridor",
+    # Terrain/Mesh/BeamNG
     "TerrainIR",
-    # Mesh IR
+    "DemArtifact",
+    "VerticalDatumType",
     "MeshIR",
     "Submesh",
-    # BeamNG Target IR
-    "BeamNGTargetIR",
     "TSStaticItem",
     "DecalRoadItem",
+    "TerrainBlockItem",
+    "BeamNGTargetIR",
     # Job State
     "JobStatus",
     "JobEvent",
