@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="osmosis">
+  <node id="1" lat="0.0" lon="0.0"/>
+  <node id="2" lat="0.0" lon="0.001"/>
+  <way id="10" version="1">
+    <nd ref="1"/>
+    <nd ref="2"/>
+    <tag k="highway" v="primary"/>
+  </way>
+</osm>

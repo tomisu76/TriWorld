@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "capturedAt": "2026-07-29T21:55:00Z",
+  "python": "3.11.11",
+  "node": "24.13.1",
+  "sumo": "1.27.1",
+  "gdal": "not-installed",
+  "proj": "not-installed",
+  "beamng": {
+    "version": "0.38.6.0",
+    "build": "19963",
+    "installRoot": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\BeamNG.drive",
+    "userRoot": "C:\\Users\\tomisu\\AppData\\Local\\BeamNG\\BeamNG.drive\\current\\"
+  },
+  "blender": [],
+  "capabilityHashes": {}
+}
