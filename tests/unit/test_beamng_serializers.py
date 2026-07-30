@@ -14,16 +14,16 @@ def test_ter_writer():
         writer = TerWriter(size=256, square_size=2.0, max_height=500.0)
         writer.add_material("asphalt")
         
-        height_map, layer_map = create_flat_terrain_ter(256)
-        writer.write(path, height_map, layer_map)
+        height_map, layer_map, layer_texture_map = create_flat_terrain_ter(256)
+        writer.write(path, height_map, layer_map, layer_texture_map)
         
         assert path.exists()
         assert path.stat().st_size > 0
         
-        # Read back and verify header
+        # Read back and verify header (version 9)
         with open(path, 'rb') as f:
             version = f.read(1)[0]
-            assert version == 1
+            assert version == 9  # BeamNG 0.38.6 uses version 9
             
             size = int.from_bytes(f.read(4), 'little')
             assert size == 256
@@ -35,6 +35,10 @@ def test_ter_writer():
             # Layer map: 256*256 bytes
             layer_bytes = f.read(256 * 256)
             assert len(layer_bytes) == 256 * 256
+            
+            # Layer texture map: 256*256 bytes (version 9+)
+            layer_tex_bytes = f.read(256 * 256)
+            assert len(layer_tex_bytes) == 256 * 256
             
             # Material count
             mat_count = int.from_bytes(f.read(4), 'little')
@@ -88,9 +92,10 @@ def test_create_straight_road_dae():
         bounds = create_straight_road_dae(path, "straight_road", length=500.0, width=7.0)
         
         assert path.exists()
-        assert bounds['min'][0] == -3.5  # half width
-        assert bounds['max'][0] == 3.5
-        assert bounds['max'][1] == 500.0
+        assert bounds['min'][0] == 0.0  # start of road
+        assert bounds['max'][0] == 500.0  # end of road
+        assert bounds['min'][1] == -3.5  # half width (left edge)
+        assert bounds['max'][1] == 3.5   # half width (right edge)
         assert bounds['max'][2] == 0.0
 
 

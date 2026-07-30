@@ -9,18 +9,19 @@ import xml.etree.ElementTree as ET
 
 class TerWriter:
     """Writer for BeamNG .ter binary heightfield format.
-    
-    Format (from BeamNG documentation):
-    - u8: binaryVersion (1)
+
+    Format (BeamNG 0.38.6, version 9):
+    - u8: binaryVersion (9)
     - u32: size (heightmap dimension, power of 2)
     - u16[size*size]: heightMap (16-bit unsigned)
     - u8[size*size]: layerMap (8-bit, 255 = hole)
+    - u8[size*size]: layerTextureMap (8-bit)
     - u32: materialCount
-    - materialCount * string: materialNames (null-terminated or length-prefixed)
+    - materialCount * (u32 length + string): materialNames (length-prefixed UTF-8)
     """
-    
-    BINARY_VERSION = 1
-    
+
+    BINARY_VERSION = 9
+
     def __init__(self, size: int = 256, square_size: float = 2.0, max_height: float = 500.0):
         """
         Args:
@@ -34,52 +35,61 @@ class TerWriter:
         self.square_size = square_size
         self.max_height = max_height
         self.material_names: List[str] = []
-        
-    def write(self, path: Path, height_map: np.ndarray, layer_map: Optional[np.ndarray] = None):
+
+    def write(self, path: Path, height_map: np.ndarray, layer_map: Optional[np.ndarray] = None,
+              layer_texture_map: Optional[np.ndarray] = None):
         """Write .ter file.
-        
+
         Args:
             path: Output file path
             height_map: 2D array of shape (size, size) with heights in meters
             layer_map: Optional 2D array of shape (size, size) with material indices (0-254, 255=hole)
+            layer_texture_map: Optional 2D array of shape (size, size) with texture layer indices
         """
         if height_map.shape != (self.size, self.size):
             raise ValueError(f"Height map must be {self.size}x{self.size}, got {height_map.shape}")
-        
+
         if layer_map is None:
             layer_map = np.zeros((self.size, self.size), dtype=np.uint8)
         elif layer_map.shape != (self.size, self.size):
             raise ValueError(f"Layer map must be {self.size}x{self.size}, got {layer_map.shape}")
-        
+
+        if layer_texture_map is None:
+            layer_texture_map = np.zeros((self.size, self.size), dtype=np.uint8)
+        elif layer_texture_map.shape != (self.size, self.size):
+            raise ValueError(f"Layer texture map must be {self.size}x{self.size}, got {layer_texture_map.shape}")
+
         # Quantize heights to 16-bit unsigned
         # Formula: quantized = round((height + max_height) / (2 * max_height) * 65535)
-        # This maps [-max_height, +max_height] to [0, 65535]
+        # Maps [-max_height, +max_height] to [0, 65535]
         quantized = np.clip(
             np.round((height_map + self.max_height) / (2 * self.max_height) * 65535),
             0, 65535
         ).astype(np.uint16)
-        
+
         with open(path, 'wb') as f:
-            # Binary version
+            # Binary version (u8)
             f.write(struct.pack('B', self.BINARY_VERSION))
-            
-            # Size
+
+            # Size (u32)
             f.write(struct.pack('<I', self.size))
-            
+
             # Height map (row-major, row 0 = north)
             f.write(quantized.tobytes())
-            
+
             # Layer map
             f.write(layer_map.astype(np.uint8).tobytes())
-            
+
+            # Layer texture map (version 9+)
+            f.write(layer_texture_map.astype(np.uint8).tobytes())
+
             # Material count and names
             f.write(struct.pack('<I', len(self.material_names)))
             for name in self.material_names:
-                # Write as length-prefixed UTF-8 string
                 name_bytes = name.encode('utf-8')
                 f.write(struct.pack('<I', len(name_bytes)))
                 f.write(name_bytes)
-    
+
     def add_material(self, name: str):
         if name not in self.material_names:
             self.material_names.append(name)
@@ -87,7 +97,7 @@ class TerWriter:
 
 class DaeSerializer:
     """Minimal deterministic Collada DAE serializer for road chunks."""
-    
+
     @staticmethod
     def write_road_chunk(
         path: Path,
@@ -100,7 +110,7 @@ class DaeSerializer:
         bounds: dict,
     ):
         """Write a road chunk as Collada DAE.
-        
+
         Args:
             path: Output .dae file path
             mesh_id: Unique mesh identifier
@@ -115,21 +125,24 @@ class DaeSerializer:
             'xmlns': 'http://www.collada.org/2005/11/COLLADASchema',
             'version': '1.4.1',
         })
-        
+
         # Asset info
         asset = ET.SubElement(root, 'asset')
         ET.SubElement(asset, 'unit', {'name': 'meter', 'meter': '1.0'})
         ET.SubElement(asset, 'up_axis').text = 'Z_UP'
         ET.SubElement(asset, 'contributor')
-        
+
         # Library geometries
         lib_geom = ET.SubElement(root, 'library_geometries')
         geom = ET.SubElement(lib_geom, 'geometry', {'id': f'{mesh_id}-geom', 'name': mesh_id})
         mesh = ET.SubElement(geom, 'mesh')
-        
+
         # Positions source
         pos_src = ET.SubElement(mesh, 'source', {'id': f'{mesh_id}-positions'})
-        pos_array = ET.SubElement(pos_src, 'float_array', {'id': f'{mesh_id}-positions-array', 'count': str(len(positions) * 3)})
+        pos_array = ET.SubElement(pos_src, 'float_array', {
+            'id': f'{mesh_id}-positions-array',
+            'count': str(len(positions) * 3)
+        })
         pos_array.text = ' '.join(f'{v:.6f}' for p in positions for v in p)
         ET.SubElement(pos_src, 'technique_common').append(
             ET.Element('accessor', {
@@ -138,10 +151,13 @@ class DaeSerializer:
                 'stride': '3'
             })
         )
-        
+
         # Normals source
         norm_src = ET.SubElement(mesh, 'source', {'id': f'{mesh_id}-normals'})
-        norm_array = ET.SubElement(norm_src, 'float_array', {'id': f'{mesh_id}-normals-array', 'count': str(len(normals) * 3)})
+        norm_array = ET.SubElement(norm_src, 'float_array', {
+            'id': f'{mesh_id}-normals-array',
+            'count': str(len(normals) * 3)
+        })
         norm_array.text = ' '.join(f'{v:.6f}' for n in normals for v in n)
         ET.SubElement(norm_src, 'technique_common').append(
             ET.Element('accessor', {
@@ -150,10 +166,13 @@ class DaeSerializer:
                 'stride': '3'
             })
         )
-        
+
         # UV source
         uv_src = ET.SubElement(mesh, 'source', {'id': f'{mesh_id}-uvs'})
-        uv_array = ET.SubElement(uv_src, 'float_array', {'id': f'{mesh_id}-uvs-array', 'count': str(len(uvs) * 2)})
+        uv_array = ET.SubElement(uv_src, 'float_array', {
+            'id': f'{mesh_id}-uvs-array',
+            'count': str(len(uvs) * 2)
+        })
         uv_array.text = ' '.join(f'{v:.6f}' for uv in uvs for v in uv)
         ET.SubElement(uv_src, 'technique_common').append(
             ET.Element('accessor', {
@@ -162,11 +181,11 @@ class DaeSerializer:
                 'stride': '2'
             })
         )
-        
+
         # Vertices
         vertices = ET.SubElement(mesh, 'vertices', {'id': f'{mesh_id}-vertices'})
         ET.SubElement(vertices, 'input', {'semantic': 'POSITION', 'source': f'#{mesh_id}-positions'})
-        
+
         # Polylist (triangles)
         polylist = ET.SubElement(mesh, 'polylist', {'material': material_name, 'count': str(len(indices) // 3)})
         ET.SubElement(polylist, 'input', {'semantic': 'VERTEX', 'source': f'#{mesh_id}-vertices', 'offset': '0'})
@@ -175,45 +194,44 @@ class DaeSerializer:
         vcount = ET.SubElement(polylist, 'vcount')
         vcount.text = ' '.join(['3'] * (len(indices) // 3))
         p = ET.SubElement(polylist, 'p')
-        # Format: vertex_index normal_index uv_index for each corner
         p.text = ' '.join(f'{idx} {idx} {idx}' for idx in indices)
-        
+
         # Library materials
         lib_mat = ET.SubElement(root, 'library_materials')
         mat = ET.SubElement(lib_mat, 'material', {'id': f'{material_name}-mat', 'name': material_name})
         ET.SubElement(mat, 'instance_effect', {'url': f'#{material_name}-fx'})
-        
+
         # Library effects
         lib_fx = ET.SubElement(root, 'library_effects')
         effect = ET.SubElement(lib_fx, 'effect', {'id': f'{material_name}-fx', 'name': material_name})
         profile = ET.SubElement(effect, 'profile_COMMON')
         technique = ET.SubElement(profile, 'technique', {'sid': 'common'})
         phong = ET.SubElement(technique, 'phong')
-        
+
         emission = ET.SubElement(phong, 'emission')
         color = ET.SubElement(emission, 'color', {'sid': 'emission'})
         color.text = '0 0 0 1'
-        
+
         ambient = ET.SubElement(phong, 'ambient')
         color = ET.SubElement(ambient, 'color', {'sid': 'ambient'})
         color.text = '0.3 0.3 0.3 1'
-        
+
         diffuse = ET.SubElement(phong, 'diffuse')
         color = ET.SubElement(diffuse, 'color', {'sid': 'diffuse'})
         color.text = '0.4 0.4 0.4 1'
-        
+
         specular = ET.SubElement(phong, 'specular')
         color = ET.SubElement(specular, 'color', {'sid': 'specular'})
         color.text = '0.1 0.1 0.1 1'
-        
+
         shininess = ET.SubElement(phong, 'shininess')
         float_elem = ET.SubElement(shininess, 'float', {'sid': 'shininess'})
         float_elem.text = '10'
-        
+
         transparency = ET.SubElement(phong, 'transparency')
         float_elem = ET.SubElement(transparency, 'float', {'sid': 'transparency'})
         float_elem.text = '1'
-        
+
         # Scene
         scene = ET.SubElement(root, 'scene')
         instance = ET.SubElement(scene, 'instance_visual_scene', {'url': '#VisualScene'})
@@ -221,26 +239,23 @@ class DaeSerializer:
         vs = ET.SubElement(lib_scene, 'visual_scene', {'id': 'VisualScene', 'name': 'VisualScene'})
         node = ET.SubElement(vs, 'node', {'id': f'{mesh_id}-node', 'name': mesh_id})
         ET.SubElement(node, 'instance_geometry', {'url': f'#{mesh_id}-geom'})
-        
+
         # Write with stable formatting
         ET.indent(root, space='  ')
         tree = ET.ElementTree(root)
         tree.write(path, encoding='utf-8', xml_declaration=True)
 
 
-def create_flat_terrain_ter(size: int = 256, square_size: float = 2.0) -> Tuple[np.ndarray, np.ndarray]:
+def create_flat_terrain_ter(size: int = 256, square_size: float = 2.0) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Create a flat terrain at elevation 0.
-    
-    Args:
-        size: Heightmap dimension (power of 2)
-        square_size: World size of one pixel in meters
-    
+
     Returns:
-        (height_map, layer_map)
+        (height_map, layer_map, layer_texture_map)
     """
     height_map = np.zeros((size, size), dtype=np.float32)
     layer_map = np.zeros((size, size), dtype=np.uint8)
-    return height_map, layer_map
+    layer_texture_map = np.zeros((size, size), dtype=np.uint8)
+    return height_map, layer_map, layer_texture_map
 
 
 def create_straight_road_dae(
@@ -251,20 +266,21 @@ def create_straight_road_dae(
     material_name: str = "asphalt",
 ) -> dict:
     """Create a straight road DAE along X axis centered at origin.
-    
+
     Returns bounds dict.
     """
     half_w = width / 2.0
-    
+
     # 4 vertices for a simple rectangular road strip
+    # X extent = length (500m), Y extent = width (7m)
     # Vertex order: bottom-left, bottom-right, top-right, top-left (Z-up, X-forward, Y-left)
     positions = [
-        [-half_w, 0.0, 0.0],      # 0: left edge at start
-        [half_w, 0.0, 0.0],       # 1: right edge at start
-        [half_w, length, 0.0],    # 2: right edge at end
-        [-half_w, length, 0.0],   # 3: left edge at end
+        [0.0, -half_w, 0.0],      # 0: left edge at start
+        [length, -half_w, 0.0],   # 1: right edge at start
+        [length, half_w, 0.0],    # 2: right edge at end
+        [0.0, half_w, 0.0],       # 3: left edge at end
     ]
-    
+
     # All normals point up
     normals = [
         [0.0, 0.0, 1.0],
@@ -272,23 +288,23 @@ def create_straight_road_dae(
         [0.0, 0.0, 1.0],
         [0.0, 0.0, 1.0],
     ]
-    
-    # UVs: map along length and length to V, width to U
+
+    # UVs: map along length and width
     uvs = [
         [0.0, 0.0],
         [1.0, 0.0],
         [1.0, 1.0],
         [0.0, 1.0],
     ]
-    
+
     # Two triangles
     indices = [0, 1, 2, 0, 2, 3]
-    
+
     bounds = {
-        'min': [-half_w, 0.0, 0.0],
-        'max': [half_w, length, 0.0],
+        'min': [0.0, -half_w, 0.0],
+        'max': [length, half_w, 0.0],
     }
-    
+
     DaeSerializer.write_road_chunk(
         path=path,
         mesh_id=mesh_id,
@@ -299,5 +315,5 @@ def create_straight_road_dae(
         material_name=material_name,
         bounds=bounds,
     )
-    
+
     return bounds

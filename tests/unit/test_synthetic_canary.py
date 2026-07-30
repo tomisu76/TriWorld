@@ -42,7 +42,15 @@ def test_create_synthetic_canary():
             validation_json = json.loads(zf.read("levels/test_level/reports/validation.json"))
             assert validation_json["structural_validation"] == "passed"
             assert validation_json["beamng_runtime_validation"] == "not_run"
-            assert all(v == "passed" for v in validation_json["gates"].values())
+            # Gates: some are not_applicable for synthetic canary, some passed
+            assert validation_json["gates"]["terrain"] == "passed"
+            assert validation_json["gates"]["beamngTarget"] == "passed"
+            assert validation_json["gates"]["assets"] == "passed"
+            assert validation_json["gates"]["licenses"] == "passed"
+            assert validation_json["gates"]["ir"] == "not_applicable"
+            assert validation_json["gates"]["civil"] == "not_applicable"
+            assert validation_json["gates"]["mesh"] == "not_applicable"
+            assert validation_json["gates"]["zip"] == "not_run"
             
             manifest = json.loads(zf.read("levels/test_level/reports/build-manifest.json"))
             assert manifest["requestHash"] == "synthetic_canary"
