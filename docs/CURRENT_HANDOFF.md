@@ -157,3 +157,10 @@ ordering, or UV changes in one experiment.
 
 Artifacts produced from the quarantined detached `52a5dfb` checkout are invalid
 and must never be used as candidates.
+
+Important source/baseline distinction: checkpoint source already contains
+`colorMap`, `triangles`, changed COLLADA ordering, and changed UV generation.
+It is therefore not the byte-equivalent E1 source. Do not propose “add
+colorMap” against the checkpoint; the field already exists. A valid E2 isolation
+must first prove, using literal machine output, that its generated DAE is
+byte-identical to E1 and that `colorMap` is the only functional artifact change.

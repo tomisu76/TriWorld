@@ -4,6 +4,24 @@ Tento dokument dopĺňa `.hermes.md`, `HERMES_START_HERE.md` a master prompt.
 Nemení cieľ TriWorldu, architektúru ani poradie implementačných fáz. Určuje,
 aký dôkaz je potrebný pred tvrdením, že kontrola alebo fáza prešla.
 
+## 0. Zákaz predstieraných dôkazov
+
+Plán nie je vykonanie. Očakávaný výstup nie je pozorovaný výstup.
+
+- Pri vykonanom príkaze uveď presný príkaz, exit code a doslovný relevantný
+  výstup.
+- Placeholdery (`<hash>`, `<value>`), tri bodky, pseudokód a vymyslené skrátené
+  zoznamy nesmú byť označené ako výsledok auditu.
+- Úplný veľký výstup ulož ako evidence súbor, uveď jeho cestu a SHA-256 a cituj
+  riadky použité v závere.
+- Každú hodnotu v porovnávacej tabuľke musí byť možné spätne priradiť ku
+  konkrétnemu súboru a príkazu.
+- Ak sa príkaz nespustil alebo zlyhal, stav je `not_run` alebo `failed`, nikdy
+  predpokladaný úspech.
+- Artefakt vytvorený ručným ZIP patchom nie je dôkaz výstupu generátora.
+- Názov ZIP-u neurčuje jeho obsah. Rozhoduje vnútorný root, úplný zoznam entries
+  a SHA-256.
+
 ## 1. Pravda má prednosť pred zeleným reportom
 
 Neoptimalizuj implementáciu ani validator na výsledok `PASS`. Hľadaj dôvody,

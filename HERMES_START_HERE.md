@@ -15,6 +15,10 @@ The handoff is a checkpoint, not unquestionable truth. Reconcile it with Git,
 immutable artifact hashes, test output, installed files, and runtime logs before
 making consequential changes.
 
+Do not describe a proposed audit as completed. Raw commands and outputs must
+exist. When a report contains placeholders, ellipses, invented functions, or
+values that cannot be traced to a file, reject it and repeat the read-only audit.
+
 ## Authority and document roles
 
 | Need | Authoritative location |
