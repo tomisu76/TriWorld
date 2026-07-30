@@ -1,5 +1,14 @@
 # HERMES MASTER PROMPT — TRIWORLD ONE-CLICK BEAMNG MAP STUDIO
 
+> **REFERENCE DOCUMENT — NOT A SESSION CHECKPOINT**
+>
+> This is the long-term architecture and original greenfield implementation
+> blueprint. In the existing `C:\TriWorld` repository, always read
+> `docs/CURRENT_HANDOFF.md` first and continue from its recorded milestone.
+> Sections about bootstrapping an empty directory, “what to do first,” Phase 0,
+> Phase 1, and “start now” apply only when explicitly requested for a new
+> repository. They must never reset an in-progress project.
+
 > Revízia: 2026-07-29  
 > Cieľový agent: Hermes Agent  
 > Cieľový pracovný adresár: `C:\TriWorld`  
@@ -3324,7 +3333,11 @@ Fáza nesmie prejsť do implementácie, kým:
 
 ---
 
-## 33. Začni teraz
+## 33. Greenfield-only start command
+
+> This section is historical bootstrap guidance for a genuinely new/empty
+> repository. In the existing TriWorld repository, ignore the commands below
+> and continue from `docs/CURRENT_HANDOFF.md`.
 
 Prvý výstup nesmie byť náhodných tisíc riadkov kódu. Najprv v repozitári vytvor a stručne prezentuj:
 

@@ -4,7 +4,9 @@ One-click generator for portable, verified BeamNG.drive maps from real-world dat
 
 ## Start here
 
-- Hermes entry point: [`HERMES_START_HERE.md`](HERMES_START_HERE.md)
+- Current Hermes continuation checkpoint:
+  [`docs/CURRENT_HANDOFF.md`](docs/CURRENT_HANDOFF.md)
+- Hermes documentation router: [`HERMES_START_HERE.md`](HERMES_START_HERE.md)
 - Canonical implementation prompt: [`HERMES_TRIWORLD_MASTER_PROMPT_2026.md`](HERMES_TRIWORLD_MASTER_PROMPT_2026.md)
 - Research, tools, source links and playbooks: [`docs/resources/README.md`](docs/resources/README.md)
 

@@ -1,5 +1,11 @@
 # Phase 1: Contracts and Deterministic Infrastructure
 
+> **ARCHIVED HISTORICAL PLAN**
+>
+> This checklist describes the original Phase 1 planning state. It is not the
+> current work queue. New sessions must use `docs/CURRENT_HANDOFF.md` and
+> `docs/implementation-status.md`; do not resume unchecked items from this file.
+
 ## Packages Structure
 
 ```

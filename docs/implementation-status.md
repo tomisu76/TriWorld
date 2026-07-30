@@ -1,111 +1,99 @@
-# Implementation Status
+# TriWorld Implementation Status
 
-**Repository:** C:\TriWorld
-**Branch:** audit-and-evidence
-**Last Commit:** 7e3e357 - docs: update implementation status with current progress and test additions
-**Dirty/Untracked Files:**
-- M packages/contracts/__pycache__/__init__.cpython-312.pyc (staged for removal)
-- artifacts/evidence/
-- __pycache__/
-- packages/compiler/__pycache__/
-- packages/compiler/spatial/__pycache__/
-- packages/contracts/__pycache__/
-- tests/__pycache__/
-- tests/unit/__pycache__/
-(clean working tree except for __pycache__ and artifacts/evidence/)
+This document is a component inventory. The session continuation authority is
+`docs/CURRENT_HANDOFF.md`.
 
-## Phase 1: Contracts, Infrastructure & Deterministic Build (COMPLETE)
-- [x] Pydantic v2 contracts for all IRs and contracts (`packages/contracts/`)
-- [x] Deterministic job queue with SQLite backend (`packages/compiler/job_queue.py`)
-- [x] Deterministic OSM resolver with LRU cache (`packages/compiler/osm_resolver.py`)
-- [x] Deterministic DEM resolver with disk cache (`packages/compiler/dem_resolver.py`)
-- [x] BeamNG `.ter` binary writer (version 9, layerTextureMap) and DAE serializer (`packages/compiler/beamng_serializers.py`)
-- [x] Synthetic canary generator (creates minimal valid BeamNG level ZIP) (`packages/compiler/synthetic_canary.py`)
-- [x] Static ZIP validator with 18 checks (`packages/compiler/zip_validator.py`)
-- [x] Comprehensive unit test suite (87 tests passing)
-- [x] Deterministic builds: all artifacts produce identical SHA256 hashes given same inputs
-- [x] Deterministic ZIP creation with sorted file ordering and deterministic timestamps
+**Repository:** `C:\TriWorld`
 
-## Phase 2: OSM → IR Pipeline (IN PROGRESS)
-- [x] OSM parser (`packages/compiler/osm_parser.py`)
-- [ ] Way filtering and preprocessing
-- [ ] Road network IR generation (junction detection, connection validation)
-- [ ] Civil road IR generation (lanes, width, curvature, superelevation)
-- [ ] Terrain IR generation (DEM processing, coordinate transformation)
-- [ ] Mesh IR generation (triangulation, UV generation, LOD)
-- [ ] BeamNG target IR generation (TSStatic, DecalRoad, Terrain, material mapping validation from BeamNG.x.)
+**Branch:** `audit-and-evidence`
 
-## Phase 3: BeamNG Asset Generation (NOT STARTED)
-- [ ] BeamNG `.ter` writer (integrated with BeamNGTargetIR)
-- [ ] DAE exporter for TSStatic and DecalRoad (integrated with BeamNGTargetIR)
-- [ ] Material generation (`main.materials.json`)
-- [ ] Items LDJSON generation (`main/items.level.json` and `main/Environment/items.level.json`)
-- [ ] Preview image generation
-- [ ] Minimap generation
-- [ ] Attribution and README generation
-- [ ] ZIP packaging with deterministic ordering
+**Last verified HEAD:** `52a5dfbc11594677058083ed79bd0991985d8890`
+**Runtime target:** BeamNG.drive `0.38.6.0.19963`
 
-## Phase 4: Validation & Quality Gates (NOT STARTED)
-- [ ] IR validation (schema and structural checks)
-- [ ] Civil road validation (lane continuity, junction validity)
-- [ ] Mesh validation (watertightness, UV bounds, LOD)
-- [ ] BeamNG target validation (TSStatic/DecalRoad placement, material coverage)
-- [ ] Asset validation (file existence, correct references)
-- [ ] License compliance checking (CC0-1.0 or compatible)
-- [ ] Deterministic build validation (hash consistency)
-- [ ] BeamNG.drive runtime validation (optional, requires BeamNG.drive installation)
+## Current phase
 
-## Phase 5: Pipeline Orchestration & CLI (NOT STARTED)
-- [ ] Job queue integration with IR generation steps
-- [ ] CLI interface for map generation (`triworld generate ...`)
-- [ ] Progress reporting and structured logging
-- [ ] Error handling and retry mechanisms
-- [ ] Caching layer for expensive operations (DEM, OSM)
-- [ ] Deterministic mode enforcement (fixed timestamps, sorted file ordering)
+Phase 2 synthetic BeamNG canary recovery:
 
-## Phase 6: Documentation & Examples (NOT STARTED)
-- [ ] User guide and API reference
-- [ ] Example configurations for different regions
-- [ ] Performance benchmarks
-- [ ] Troubleshooting guide
-- [ ] Contributing guidelines
+`IMPLEMENTATION IN PROGRESS — RUNTIME FAILURE`
 
-## Current Focus
-Phase 2 Runtime Recovery complete — all 11 audit findings addressed:
+The generator, serializers, static validator, and tests are implemented.
+Static checks passed at the committed checkpoint, but BeamNG rejected the level
+with:
 
-1. ✅ `implementation-status.md` corrected to match actual HEAD (7e3e357)
-2. ✅ Commit 7e3e357 damage undone - detailed canary tests restored
-3. ✅ Canary uses `SpawnSphere` + `SpawnSphereMarker` (stock Italy compatible)
-4. ✅ `.ter` writer now version 9 with `layerTextureMap` (matches Italy theTerrain.ter)
-5. ✅ Physical DAE road and AI DecalRoad both along X axis at Y=250
-6. ✅ Single Sky and single Sun (no duplicate Environment serialization)
-7. ✅ Materials use stock Italy texture paths with BeamNG schema (class=Material, mapTo, Stages)
-8. ✅ `validation.json` gates honest: not_applicable/not_run where unverified
-9. ✅ Old TriWorld ZIPs in mods folder untouched (per instructions)
-10. ✅ `.gitignore` added for __pycache__, *.pyc, .pytest_cache, artifacts/; tracked .pyc removed from index
-11. ✅ Static ZIP validator with 18 checks (structure, version, assets, alignment, schema)
+`Expanded mission file is invalid: "" from "levels/test_level"`
 
-## Verification
-All 87 unit tests pass. Synthetic canary generates deterministic ZIP (identical SHA256 across runs).
-Static validation: 18/18 checks PASSED.
-- single_level_root
-- info_json_exists
-- ter_file_exists
-- terrain_json_version (version 9)
-- materials_json_exists
-- items_level_json_valid (LDJSON)
-- spawn_sphere_datablock (SpawnSphereMarker)
-- spawn_name_match (defaultSpawnPointName)
-- single_sky_sun (exactly 1 Sky, 1 Sun)
-- asset_references_exist (DAE files)
-- ter_version_structure (v9 + layerTextureMap)
-- unsafe_paths
-- duplicate_entries
-- deterministic_timestamps (1980-01-01)
-- road_axis_alignment (X-axis, Y=250 match, DAE direction X)
-- spawn_on_road (spawn at Y=250, Z=0.5)
-- material_textures (stock Italy paths)
-- material_schema (class=Material, mapTo, Stages)
+Therefore the canary is not runtime verified and the validator has a coverage
+gap around BeamNG split scene LDJSON structure.
 
-## Evidence Report
-See: `artifacts/evidence/phase2_runtime_recovery_report.md`
+## Implemented at HEAD 52a5dfb
+
+- Pydantic contracts and deterministic infrastructure.
+- SQLite job queue and deterministic source resolver foundations.
+- Synthetic canary generator.
+- Experimental BeamNG `.ter` v9 and DAE serializers.
+- Deterministic ZIP packaging.
+- Static ZIP validator and negative fixtures.
+- SpawnSphere/SpawnSphereMarker canary objects.
+- Straight physical road and AI DecalRoad alignment.
+- Material and stock dependency checks.
+
+## Verification state
+
+### Unit tested
+
+- 96 tests were reported passing at commit time.
+- Re-run the suite before making a new completion claim.
+
+### Statically validated
+
+- 20 static checks were reported passing at commit time.
+- This result does not prove BeamNG scene loading.
+- The validator accepted an artifact later rejected by BeamNG, so scene graph
+  checks require correction.
+
+### Runtime verified
+
+No.
+
+### Runtime failure evidence
+
+- BeamNG `0.38.6.0.19963`.
+- Active and rotated logs contain the `levels/test_level` expanded mission
+  error.
+- The level ZIP mounts but the mission does not load.
+
+### Not yet proven
+
+- Valid split scene hierarchy.
+- Terrain binary load and rendering.
+- Spawn.
+- Physical collision and full-road drive.
+- Materials.
+- AI navigation.
+- Save/reload persistence.
+- Clean BeamNG log.
+
+## Known evidence integrity issue
+
+Ignored/manual artifacts were modified after commit and received different
+hashes. They must not be treated as committed output. Preserve each tested ZIP
+with its SHA-256 and never edit it in place.
+
+## Current investigation boundary
+
+Read-only investigation only until approval:
+
+- compare the exact installed failing ZIP with BeamNG 0.38.6 stock and a small
+  engine-saved golden;
+- classify differences as proven requirements, stock conventions, likely
+  defects, or hypotheses;
+- focus on root MissionGroup, `__parent`, `SimGroupEnd`, persistent identity,
+  and split-file hierarchy;
+- propose the smallest source-level fix and validator regression tests.
+
+Do not start real OSM/DEM/SUMO Phase 3 work while the synthetic BeamNG target
+cannot pass the runtime load gate.
+
+## Next action
+
+Follow `docs/CURRENT_HANDOFF.md`.
