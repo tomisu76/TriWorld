@@ -1,5 +1,9 @@
 # Evidence Ledger
 
+> **PARTIAL HISTORICAL LEDGER.** Entries are valid only for their recorded date,
+> source, version, and canary. This file does not override
+> `docs/CURRENT_HANDOFF.md` or newer preserved runtime evidence.
+
 ## Format
 | Claim | Source | Version/Commit | Date Accessed | Evidence Snippet | Confidence | Canary/Test |
 |-------|--------|----------------|---------------|------------------|------------|-------------|

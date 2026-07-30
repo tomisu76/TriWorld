@@ -8,6 +8,11 @@
 > Sections about bootstrapping an empty directory, “what to do first,” Phase 0,
 > Phase 1, and “start now” apply only when explicitly requested for a new
 > repository. They must never reset an in-progress project.
+>
+> If this file is loaded automatically in an existing session, do not execute
+> its phase list or greenfield start command. Return to `.hermes.md`,
+> `HERMES_START_HERE.md`, and `docs/CURRENT_HANDOFF.md`. Current literal Git and
+> runtime evidence override examples and historical version claims below.
 
 > Revízia: 2026-07-29  
 > Cieľový agent: Hermes Agent  

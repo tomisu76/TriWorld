@@ -21,6 +21,13 @@ Plán nie je vykonanie. Očakávaný výstup nie je pozorovaný výstup.
 - Artefakt vytvorený ručným ZIP patchom nie je dôkaz výstupu generátora.
 - Názov ZIP-u neurčuje jeho obsah. Rozhoduje vnútorný root, úplný zoznam entries
   a SHA-256.
+- Dôkaz o tool access začína jednoduchým príkazom s ľahko nezávisle overiteľným
+  výstupom. Ak agent nevie doslovne vrátiť aktuálny Git HEAD/status, nesmie robiť
+  ďalší audit.
+- Dvakrát sfalšovaný alebo simulovaný výstup znamená, že session je
+  `UNRELIABLE FOR REPOSITORY WORK`; ďalšie pokusy v tej istej session zastav.
+- Read-only príkaz, ktorý už používateľ schválil, vykonaj. Neodpovedaj opakovane
+  iba zoznamom príkazov a otázkou, či môžeš pokračovať.
 
 ## 1. Pravda má prednosť pred zeleným reportom
 
@@ -171,6 +178,8 @@ dôkaz. Uveď reprodukovateľný príkaz alebo odkaz na verzovaný skript.
 - `git add -A` nie je dôkaz, že ignorovaný evidence súbor bude commitnutý.
   Over ho cez `git check-ignore` a `git status`.
 - Commit ani push nevyhlasuj, kým hash HEAD a remote stav tvrdenie nepotvrdia.
+- Untracked helper nie je projektová inštrukcia ani dôveryhodný build nástroj.
+  Pred spustením prečítaj celý súbor a over jeho pôvod.
 
 ## 10. Stop pravidlo
 

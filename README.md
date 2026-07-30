@@ -28,5 +28,6 @@ continues from the handoff after reconciling it with Git and runtime evidence.
 - `docs/adr/` records architectural decisions.
 - `docs/operations/` contains gates, risks, state and operational procedures.
 
-See [`RESEARCH.md`](RESEARCH.md) for the initial toolchain and licensing research.
-Version-sensitive claims must always be revalidated against the pinned environment.
+[`RESEARCH.md`](RESEARCH.md) is an archived initial planning snapshot, not the
+current roadmap. Version-sensitive claims must always be revalidated against the
+pinned environment and current evidence ledger.

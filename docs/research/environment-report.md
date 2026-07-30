@@ -1,5 +1,9 @@
 # Environment Report
 
+> **HISTORICAL SNAPSHOT (2026-07-29).** Not a startup instruction or current
+> environment guarantee. Re-run capability probes before relying on any value.
+> “Blockers” and “Next Actions” below describe the initial snapshot only.
+
 **Generated:** 2026-07-29T21:55:00Z
 **Repository:** C:\TriWorld
 **Branch:** audit-and-evidence
@@ -59,13 +63,13 @@
 | GDAL | ❌ | — | Not installed |
 | PROJ | ❌ | — | Not installed |
 
-## Blockers for Phase 0
+## Historical Phase 0 blockers (not current queue)
 1. **Blender not installed** — Required for Blender QA (Phase 10) and asset authoring
 2. **GDAL/PROJ not installed** — Required for DEM processing and CRS transforms
 3. **SUMO_HOME not set** — Should be configured for reliable subprocess calls
 4. **Python environment** — Need to pin 3.12 and create uv lockfile
 
-## Next Actions
+## Historical next actions (superseded)
 1. Install Blender 4.5 LTS (or latest stable with Collada support)
 2. Install GDAL/PROJ via conda-forge or OSGeo4W
 3. Set SUMO_HOME environment variable

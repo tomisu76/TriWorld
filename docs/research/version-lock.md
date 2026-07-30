@@ -1,5 +1,9 @@
 # Version Lock
 
+> **DRAFT HISTORICAL VERSION SNAPSHOT.** Values marked target, planned, missing,
+> or “will be generated” are not verified current dependencies. Reconcile this
+> file with the actual lockfiles and environment before use.
+
 ## Pinned Versions (toolchain.lock.json)
 
 ```json

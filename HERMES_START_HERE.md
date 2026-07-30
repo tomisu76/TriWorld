@@ -5,11 +5,13 @@ information belongs; it never defines the current phase.
 
 ## Start or resume work
 
-Always begin with:
+Always begin with actual tool output:
 
-1. `docs/CURRENT_HANDOFF.md`
-2. `docs/hints/HERMES_VERIFICATION_RULES.md`
-3. current Git HEAD, status, and relevant diff
+1. `git -C C:\TriWorld rev-parse HEAD`
+2. `git -C C:\TriWorld status --short --branch`
+3. `docs/CURRENT_HANDOFF.md`
+4. `docs/hints/HERMES_VERIFICATION_RULES.md`
+5. the relevant source/artifact/log diff
 
 The handoff is a checkpoint, not unquestionable truth. Reconcile it with Git,
 immutable artifact hashes, test output, installed files, and runtime logs before
@@ -18,6 +20,10 @@ making consequential changes.
 Do not describe a proposed audit as completed. Raw commands and outputs must
 exist. When a report contains placeholders, ellipses, invented functions, or
 values that cannot be traced to a file, reject it and repeat the read-only audit.
+
+If this session cannot execute the two initial Git commands, it must stop with
+`TOOL ACCESS NOT PROVEN`. It must not simulate their output or continue from
+conversation memory.
 
 ## Authority and document roles
 
@@ -37,6 +43,15 @@ values that cannot be traced to a file, reject it and repeat the read-only audit
 
 The master prompt includes original greenfield material. Read only sections
 relevant to the current task. Historical plans never override the handoff.
+
+Authority when sources disagree:
+
+1. observed pinned-runtime behavior and preserved raw log;
+2. exact installed/preserved artifact identified by SHA-256;
+3. literal current Git/source/tool output;
+4. `docs/CURRENT_HANDOFF.md`;
+5. implementation inventory, ADRs, research snapshots, historical plans;
+6. model memory or prior chat summaries.
 
 ## Task routing
 
@@ -66,6 +81,9 @@ git diff --stat
 Preserve dirty and untracked user work. Inspect overlapping modifications before
 editing. Do not regenerate, install, launch, terminate, clear, commit, or push
 merely because an older report describes that action.
+
+Do not run untracked helper scripts until their complete contents, provenance,
+and intended inputs/outputs are inspected and the handoff authorizes their use.
 
 ## Evidence discipline
 

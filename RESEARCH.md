@@ -1,5 +1,12 @@
 # TriWorld Research & Implementation Plan
 
+> **ARCHIVED INITIAL PLANNING SNAPSHOT — NOT CURRENT INSTRUCTIONS**
+>
+> This file preserves the 2026-07-29 starting assumptions. It must not determine
+> the current phase, roadmap, dependency state, or next action. New sessions use
+> `docs/CURRENT_HANDOFF.md`, `docs/implementation-status.md`, and literal current
+> environment evidence. Do not execute the roadmap below as a task list.
+
 Date: 2026-07-29
 Version: 1.0.0
 Project: TriWorld - One-click BeamNG Map Studio

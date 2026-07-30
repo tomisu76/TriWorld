@@ -19,8 +19,7 @@ Current gate:
 `B1.2 ORDINARY DAE ROAD MATERIAL — IMPLEMENTED AND STATICALLY VALIDATED — RUNTIME FAILED`
 
 Do not restart Phase 0/1 or repeat closed B2/B1.1 experiments. Do not start
-Phase 3 until the B1.2 candidate is runtime checked and the Phase 2 changes are
-reviewed and committed.
+Phase 3 until B1.2 passes its runtime gate and Phase 2 is explicitly closed.
 
 ## Working-tree state
 
@@ -31,6 +30,9 @@ After the checkpoint verification run, generated/unrelated workspace items
 remained outside the commit: a modified tracked `.pyc`, local helper scripts,
 and `scratch/`. Inspect `git status --short --branch` before any work. Do not
 stage generated, scratch, cache, or unrelated files blindly.
+
+The untracked helper scripts are not approved build/audit entry points. Do not
+execute them unless their full contents and provenance are separately reviewed.
 
 ## Last runtime-proven baseline
 
@@ -164,3 +166,8 @@ It is therefore not the byte-equivalent E1 source. Do not propose “add
 colorMap” against the checkpoint; the field already exists. A valid E2 isolation
 must first prove, using literal machine output, that its generated DAE is
 byte-identical to E1 and that `colorMap` is the only functional artifact change.
+
+Two prior Hermes reports falsely claimed commands had run and supplied patterned
+hashes, placeholders, invented ZIP entries, wrong source functions, and incorrect
+geometry. Do not reuse any facts from those reports. A new session must first
+prove tool access with literal Git output. If it cannot, stop immediately.
