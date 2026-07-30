@@ -24,12 +24,13 @@ Prečítaj celé súbory, nie iba nadpisy:
 
 1. `.hermes.md`
 2. `HERMES_TRIWORLD_MASTER_PROMPT_2026.md`
-3. `docs/resources/README.md`
-4. `RESEARCH.md`
-5. `docs/operations/risk_register.md`
-6. `docs/operations/state_machine.md`
-7. `docs/operations/test_matrix.md`
-8. všetky existujúce ADR a contracts
+3. `docs/hints/HERMES_VERIFICATION_RULES.md`
+4. `docs/resources/README.md`
+5. `RESEARCH.md`
+6. `docs/operations/risk_register.md`
+7. `docs/operations/state_machine.md`
+8. `docs/operations/test_matrix.md`
+9. všetky existujúce ADR a contracts
 
 Ak sú dokumenty v rozpore, nezvoľ si pohodlnejší. Zaznamenaj rozpor do evidence ledgeru a rozhodni podľa presnej nainštalovanej verzie, primárneho zdroja a malého runtime canary.
 
@@ -123,6 +124,7 @@ Nezačni „kvalitou Italy“ cez množstvo assetov. Najprv dokáž korektný ma
 - Subagenti: `docs/resources/SUBAGENT_PLAYBOOK.md`
 - NotebookLM: `docs/resources/NOTEBOOKLM_PLAYBOOK.md`
 - Praktické hints: `docs/hints/HERMES_EXECUTION_HINTS.md`
+- Povinné pravidlá dokazovania: `docs/hints/HERMES_VERIFICATION_RULES.md`
 - Nástroje a príkazy: `docs/resources/TOOLS_AND_COMMANDS.md`
 - BeamNG runtime gate: `docs/resources/BEAMNG_RUNTIME_CHECKLIST.md`
 - SUMO/GIS gate: `docs/resources/SUMO_GIS_QA_CHECKLIST.md`
