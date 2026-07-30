@@ -1,124 +1,159 @@
 # TriWorld Current Handoff
 
-**Purpose:** authoritative continuation checkpoint for every new Hermes session.
+**Purpose:** authoritative continuation checkpoint. Replace stale facts; do not
+append a progress diary.
 
 **Updated:** 2026-07-30
-
 **Repository:** `C:\TriWorld`
-
 **Branch:** `audit-and-evidence`
+**Implementation checkpoint:** the commit containing this file; verify with
+`git rev-parse HEAD`.
 
-**Implementation baseline:** `52a5dfbc11594677058083ed79bd0991985d8890`
-**Instruction checkpoint:** the current Git HEAD containing this file; verify
-with `git rev-parse HEAD`.
+## Current objective
 
-## Scope of the instruction-flow checkpoint
+Complete the Phase 2 synthetic BeamNG canary as a trustworthy minimum runtime
+foundation before advancing to real OSM/DEM/SUMO map generation.
 
-The instruction-flow repair changes only:
+Current gate:
 
-- `.hermes.md`
-- `HERMES_START_HERE.md`
-- `HERMES_TRIWORLD_MASTER_PROMPT_2026.md`
-- `PHASE1_PLAN.md`
-- `README.md`
-- `docs/implementation-status.md`
-- `docs/CURRENT_HANDOFF.md`
+`B1.2 ORDINARY DAE ROAD MATERIAL — IMPLEMENTED AND STATICALLY VALIDATED — RUNTIME FAILED`
 
-No generator, serializer, validator, test, ZIP, BeamNG profile, or installed mod
-was changed as part of the instruction-flow repair.
+Do not restart Phase 0/1 or repeat closed B2/B1.1 experiments. Do not start
+Phase 3 until the B1.2 candidate is runtime checked and the Phase 2 changes are
+reviewed and committed.
 
-## Current milestone
+## Working-tree state
 
-Phase 2 synthetic BeamNG canary recovery.
+The restored Phase 2 recovery source, tests, and universal documentation are
+committed together in the checkpoint containing this file.
 
-Implementation and static validation exist, but the BeamNG runtime gate has
-failed. The phase status is:
+After the checkpoint verification run, generated/unrelated workspace items
+remained outside the commit: a modified tracked `.pyc`, local helper scripts,
+and `scratch/`. Inspect `git status --short --branch` before any work. Do not
+stage generated, scratch, cache, or unrelated files blindly.
 
-`IMPLEMENTATION IN PROGRESS — STATIC CHECKS INSUFFICIENT — RUNTIME FAILURE`
+## Last runtime-proven baseline
 
-Do not start Phase 3 and do not repeat the original greenfield/Phase 0/Phase 1
-bootstrap.
+Artifact:
 
-## Proven state
+`C:\TriWorld\artifacts\material_recovery_b11b.zip`
 
-- Commit `52a5dfb` contains the Phase 2 recovery implementation and tests.
-- The committed test suite reported 96 passing tests at commit time.
-- Static validation reported 20 checks passing, but it did not detect the
-  runtime-invalid scene graph. Static PASS is therefore not sufficient evidence
-  of BeamNG compatibility.
-- BeamNG version used for the current runtime investigation:
-  `0.38.6.0.19963`.
-- Current BeamNG logs contain:
-  `Expanded mission file is invalid: "" from "levels/test_level"`.
-- The error occurs in both the active `beamng.log` and rotated `beamng.1.log`.
-- `levels/test_level/info.json` exists in the installed ZIP. Do not diagnose the
-  failure as a missing `info.json` without new contrary evidence.
+SHA-256:
 
-## Artifact identity
+`17e3b6f7eccfa3893fd57495e2ea8b16d693ef1a310134f3ab08fc42c2146004`
 
-Several post-commit experimental ZIPs were created manually. They are evidence,
-not approved generator output:
+Pinned runtime:
 
-- `artifacts/canary_phase2_runtime_gate.zip`
-- `artifacts/canary_phase2_fixed.zip`
-- `artifacts/canary_phase2_fixed2.zip`
+`BeamNG.drive 0.38.6.0.19963`
 
-At the last read-only inspection, the installed
-`%LOCALAPPDATA%\BeamNG\BeamNG.drive\current\mods\test_level.zip` matched
-`canary_phase2_fixed2.zip`:
+Observed runtime evidence for this exact artifact:
 
-`A21B2A70E786D73B4F5A2519721811D5AF1A45CC50C4390BB6F78E4C833A0CDA`
+- level discovered and loaded;
+- scene hierarchy deserialized without errors;
+- daylight/environment active;
+- vehicle spawned at `(0, 250, 0.5)`;
+- terrain, physical road and vehicle vertically aligned;
+- vehicle supported and driveable;
+- terrain rendered with detailed asphalt;
+- `Missing Terrain texture`: 0;
+- `WARNING_MATERIAL`: 0;
+- invalid material-wrapper errors: 0;
+- terrain collision resolved without ground-model fallback.
 
-Never claim that two ZIPs have the same SHA-256 after their contents changed.
-Re-hash artifacts before relying on this checkpoint because ignored artifacts
-can change without changing Git.
+Remaining visual defect in this baseline: the Collada/TSStatic road strip used an
+unresolved white material. That defect is the isolated B1.2 scope.
 
-## Current root-cause investigation
+The currently installed mod was still this B1.1b artifact at the last inspection;
+its installed SHA-256 matched the value above.
 
-The likely failure area is BeamNG 0.38.6 split scene LDJSON serialization:
+## B1.2 E1 candidate and runtime result
 
-- root `main/items.level.json`;
-- `MissionGroup` hierarchy;
-- `__parent` relationships;
-- use of `SimGroupEnd` in split scene files;
-- required identity fields such as `persistentId`/`enabled`;
-- separation of stock convention from an actual runtime requirement.
+Artifact:
 
-Differences from Italy are hypotheses, not automatically defects. Compare with
-the exact installed stock version and preferably a small engine-saved golden
-level. Identify the smallest structural defect capable of producing the exact
-runtime error.
+`C:\TriWorld\artifacts\material_recovery_b12_fix.zip`
 
-## Do not do
+SHA-256:
 
-- Do not create `fixed3`, `fixed4`, or other manually patched ZIP variants.
-- Do not modify the generator until the read-only root-cause report is
-  internally consistent.
-- Do not edit Hermes skills as part of TriWorld runtime recovery.
-- Do not launch/terminate BeamNG, replace installed mods, clear caches, commit,
-  or push without explicit authorization for that action.
-- Do not repeat completed static audits or claim runtime success from validator
-  results.
-- Do not use a direct NVIDIA/Nemotron session for long audits; use
-  `route-default` so LiteLLM fallback remains available.
+`8e93c389c6f9c5432cfd0f71392c7232bccdf90950845296c7e4ac5820975840`
+
+Implemented B1.2 change:
+
+- Collada geometry binds material symbol `triworld_road_asphalt`;
+- a separate ordinary BeamNG `Material` with matching `mapTo` is emitted under
+  `art/shapes/roads/main.materials.json`;
+- terrain layers remain `TerrainMaterial` objects and are not reused as ordinary
+  mesh materials;
+- the validator rejects missing, mismatched, or terrain-class DAE bindings.
+
+Fresh verification performed from the current working tree:
+
+```text
+.venv\Scripts\python.exe -m pytest tests -q
+159 passed, 4 pre-existing datetime.utcnow deprecation warnings
+
+validate_zip_structure(artifacts/material_recovery_b12_fix.zip)
+24/24 checks passed
+```
+
+This proves implementation, unit tests, and static package validation.
+
+The exact E1 artifact above was runtime tested. Result: **FAILED** — the road
+rendered BeamNG's orange `NO MATERIAL` diagnostic surface. Geometry, terrain,
+spawn, daylight and alignment still worked. A fresh
+`temp/levels/synthetic_canary/art/shapes/roads/straight_road.cdae` was generated
+during the run, disproving reuse of the legacy `test_level` compiled shape as
+the E1 cause.
+
+Preserved E1 log:
+
+`C:\TriWorld\artifacts\evidence\beamng_b12_e1_20260730_220439.log`
+
+The runtime-proven B1.1b baseline `17e3b6f7...` is restored and installed.
+
+## Closed recovery findings that must not regress
+
+- BeamNG 0.38.6 split scene hierarchy uses nested `items.level.json` files and
+  explicit `__parent`; serialized `SimGroupEnd` objects are invalid.
+- Selector metadata uses `title`, `authors`, `previews`, and valid spawn metadata.
+- `SpawnSphere.position` and `rotationMatrix` require numeric arrays for the
+  proven canary.
+- `.ter` v9 height samples use unsigned local heights; world offset belongs in
+  the TerrainBlock transform.
+- For the proven v9 target, the binary layout has height map, layer map, then the
+  material table; no extra `layerTextureMap` block.
+- Material count is `u32`; each material-name length is `u8`.
+- Terrain materials require a flat material dictionary,
+  `TerrainMaterialTextureSet`, matching `TerrainMaterial.internalName`, and the
+  TerrainBlock `materialTextureSet` reference.
+- A valid `ScatterSky` plus `TimeOfDay` configuration is required for usable
+  daylight.
+- Static validation previously accepted runtime-invalid packages. Preserve the
+  adversarial regression fixtures added for every discovered defect.
+
+## Not yet proven
+
+- B1.2 ordinary DAE material renders correctly in BeamNG 0.38.6.
+- Full Phase 2 save/reload behavior.
+- AI route query/traffic behavior; a DecalRoad loading without errors is not
+  sufficient proof.
+- Real-world OSM/DEM/SUMO generation and Italy-level quality.
+
+## Preserve
+
+- The immutable B1.1b runtime-proven ZIP and its runtime log/evidence.
+- The B1.2 candidate under its exact hash.
+- Unrelated dirty work and `scratch/` until ownership is reviewed.
+- Stock BeamNG content as read-only evidence; never copy it into distributable
+  TriWorld artifacts.
 
 ## Next falsifiable action
 
-Complete one focused read-only comparison of the exact installed failing ZIP,
-the two current BeamNG logs, stock BeamNG 0.38.6 split scene files, and a small
-engine-saved level. Produce:
+Determine ordinary Material discovery/binding for TSStatic meshes. Prefer a
+verified runtime registry query for `triworld_road_asphalt` with a working stock
+Material as positive control. If that is unavailable, create one deterministic
+candidate from the restored recovery source that changes exactly one Material
+schema variable relative to E1. Do not combine `colorMap`, primitive type, XML
+ordering, or UV changes in one experiment.
 
-1. proven runtime requirements;
-2. stock conventions only;
-3. likely defects;
-4. unproven hypotheses;
-5. the smallest proposed generator change;
-6. validator regression checks that would reject the observed malformed scene.
-
-Stop before implementation and request approval.
-
-## Handoff maintenance rule
-
-The agent that completes or changes this milestone must update this file in the
-same focused commit. Replace stale facts; do not append repetitive progress
-transcripts.
+Artifacts produced from the quarantined detached `52a5dfb` checkout are invalid
+and must never be used as candidates.

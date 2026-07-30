@@ -29,15 +29,25 @@ def test_create_synthetic_canary():
             assert "levels/test_level/test_level.ter" in namelist
             assert "levels/test_level/art/shapes/roads/straight_road.dae" in namelist
             assert "levels/test_level/main/items.level.json" in namelist
-            assert "levels/test_level/main/Environment/items.level.json" in namelist
+            assert "levels/test_level/main/MissionGroup/items.level.json" in namelist
+            assert "levels/test_level/main/MissionGroup/Level_objects/items.level.json" in namelist
+            assert "levels/test_level/main/MissionGroup/Spawnpoints/items.level.json" in namelist
+            assert "levels/test_level/main/MissionGroup/Roads/items.level.json" in namelist
+            assert "levels/test_level/main/MissionGroup/AI/items.level.json" in namelist
             assert "levels/test_level/reports/build-manifest.json" in namelist
             assert "levels/test_level/reports/validation.json" in namelist
             
             # Validate JSON files
             info_json = json.loads(zf.read("levels/test_level/info.json"))
-            assert info_json["name"] == "test_level"
-            assert info_json["version"] == 1
-            assert info_json["author"] == "TriWorld"
+            assert info_json["title"] == "TriWorld Phase 2 Canary"
+            assert info_json["authors"] == "TriWorld"
+            assert "version" not in info_json  # legacy field removed
+            assert "name" not in info_json     # legacy field removed
+            assert "author" not in info_json   # legacy field removed
+            assert "previewImage" not in info_json  # legacy field removed
+            assert "missionFile" not in info_json   # legacy field removed
+            assert "previews" in info_json
+            assert info_json["previews"] == ["preview.png"]
             
             validation_json = json.loads(zf.read("levels/test_level/reports/validation.json"))
             assert validation_json["structural_validation"] == "passed"

@@ -39,17 +39,17 @@ def create_synthetic_canary(output_zip: Path, level_name: str = "synthetic_canar
         art_dir = level_dir / "art" / "shapes" / "roads"
         art_dir.mkdir(parents=True)
 
-        # 1. Create flat terrain .ter (version 9 with layerTextureMap)
+        # 1. Create flat terrain .ter (version 9 without layerTextureMap)
         ter_path = level_dir / f"{level_name}.ter"
         writer = TerWriter(size=256, square_size=2.0, max_height=100.0)
         writer.add_material("asphalt")
         writer.add_material("grass")
-        height_map, layer_map, layer_texture_map = create_flat_terrain_ter(256)
-        writer.write(ter_path, height_map, layer_map, layer_texture_map)
+        height_map, layer_map = create_flat_terrain_ter(256)
+        writer.write(ter_path, height_map, layer_map)
 
         # 2. Create terrain metadata .terrain.json (version 9)
         terrain_json = {
-            "binaryFormat": "version(char), size(unsigned int), heightMap(heightMapSize * heightMapItemSize), layerMap(layerMapSize * layerMapItemSize), layerTextureMap(layerMapSize * layerMapItemSize), materialNames",
+            "binaryFormat": "version(char), size(unsigned int), heightMap(heightMapSize * heightMapItemSize), layerMap(layerMapSize * layerMapItemSize), materialNames",
             "datafile": f"/levels/{level_name}/{level_name}.ter",
             "heightMapItemSize": 2,
             "heightMapSize": 65536,
@@ -64,207 +64,326 @@ def create_synthetic_canary(output_zip: Path, level_name: str = "synthetic_canar
 
         # 3. Create road DAE (along X axis, centered at origin)
         dae_path = art_dir / "straight_road.dae"
-        bounds = create_straight_road_dae(dae_path, "straight_road", length=500.0, width=7.0, material_name="asphalt")
+        bounds = create_straight_road_dae(dae_path, "straight_road", length=500.0, width=7.0, material_name="triworld_road_asphalt")
 
-        # 4. Create info.json
+        # 3b. Create road material main.materials.json
+        road_materials_json = {
+            "triworld_road_asphalt": {
+                "name": "triworld_road_asphalt",
+                "mapTo": "triworld_road_asphalt",
+                "class": "Material",
+                "persistentId": "f7d2e8b1-4c3a-4952-b8e7-91a0c2d3e4f5",
+                "version": 1.5,
+                "Stages": [
+                    {
+                        "baseColorMap": "/levels/italy/art/terrains/t_asphalt_02_b.png",
+                        "colorMap": "/levels/italy/art/terrains/t_asphalt_02_b.png",
+                        "normalMap": "/levels/italy/art/terrains/t_asphalt_02_nm.png",
+                        "roughnessMap": "/levels/italy/art/terrains/t_asphalt_02_r.png",
+                        "roughnessFactor": 0.5
+                    },
+                    {},
+                    {},
+                    {}
+                ],
+                "annotation": "ASPHALT",
+                "castShadows": False,
+                "materialTag0": "RoadAndPath",
+                "materialTag1": "beamng"
+            }
+        }
+        (art_dir / "main.materials.json").write_text(json.dumps(road_materials_json, indent=2))
+
+        # 4. Create info.json — BeamNG 0.38.6 level discovery schema (proven in selector-visible fixed3 artifact)
         info_json = {
-            "name": level_name,
-            "version": 1,
-            "author": "TriWorld",
-            "description": "Synthetic canary for validation",
-            "previewImage": "preview.png",
+            "title": "TriWorld Phase 2 Canary",
+            "description": "Synthetic canary for validation - flat terrain, straight road",
+            "authors": "TriWorld",
+            "size": [256, 256],
             "defaultSpawnPointName": "spawn_001",
-            "levelObjects": 1,
-            "terrainFile": f"{level_name}.ter",
-            "waterFile": "",
-            "forestFile": "",
-            "decalFile": "",
-            "missionFile": "",
-            "materialFile": "main.materials.json",
-            "skyFile": "",
-            "lightFile": "",
-            "riverFile": "",
-            "breakableFile": "",
-            "prefabFile": "",
-            "coverFile": "",
-            "decalRoadFile": "",
-            "forestBrushFile": "",
-            "terrainLayerFile": "",
+            "spawnPoints": [
+                {
+                    "translationId": "TriWorld Canary Default Spawn",
+                    "description": "Safe spawn on straight road",
+                    "objectname": "spawn_001",
+                    "preview": "preview.png"
+                }
+            ],
+            "supportsTraffic": True,
+            "previews": ["preview.png"]
         }
         (level_dir / "info.json").write_text(json.dumps(info_json, indent=2))
 
-        # 5. Create main.materials.json with stock Italy texture paths and BeamNG schema
-        # Use stock Italy texture paths that actually exist in italy.zip
+        # 5. Create TerrainMaterial package
         materials_json = {
-            "materials": [
-                {
-                    "name": "asphalt",
-                    "mapTo": "asphalt",
-                    "class": "Material",
-                    "version": 1.5,
-                    "Stages": [
-                        {
-                            "baseColorMap": "/levels/italy/art/terrains/t_asphalt_02_b.png",
-                            "normalMap": "/levels/italy/art/terrains/t_asphalt_02_nm.png",
-                            "roughnessMap": "/levels/italy/art/terrains/t_asphalt_02_r.png",
-                            "roughnessFactor": 0.5,
-                        }
-                    ],
-                    "annotation": "ASPHALT",
-                    "castShadows": False,
-                    "materialTag0": "RoadAndPath",
-                    "materialTag1": "beamng",
-                    "specularStrength0": "0",
-                    "translucent": False,
-                    "translucentZWrite": False,
-                },
-                {
-                    "name": "grass",
-                    "mapTo": "grass",
-                    "class": "Material",
-                    "version": 1.5,
-                    "Stages": [
-                        {
-                            "baseColorMap": "/levels/italy/art/terrains/t_macro_grass2_b.png",
-                            "normalMap": "/levels/italy/art/terrains/t_macro_grass2_nm.png",
-                            "roughnessMap": "/levels/italy/art/terrains/t_macro_grass2_r.png",
-                            "roughnessFactor": 0.7,
-                        }
-                    ],
-                    "annotation": "GRASS",
-                    "castShadows": False,
-                    "materialTag0": "RoadAndPath",
-                    "materialTag1": "beamng",
-                    "specularStrength0": "0",
-                    "translucent": False,
-                    "translucentZWrite": False,
-                }
-            ]
+            "testLevelTerrainMaterialTextureSet": {
+                "name": "testLevelTerrainMaterialTextureSet",
+                "class": "TerrainMaterialTextureSet",
+                "persistentId": "4439d48e-2402-402a-8a64-18fb9fb59bc1",
+                "baseTexSize": [4096, 4096],
+                "detailTexSize": [1024, 1024],
+                "macroTexSize": [1024, 1024]
+            },
+            "asphalt": {
+                "internalName": "asphalt",
+                "class": "TerrainMaterial",
+                "persistentId": "6e2bfb0e-e63c-45c5-bd1f-40964decabc2",
+                "annotation": "ASPHALT",
+                "aoBaseTex": "/levels/italy/art/terrains/t_terrain_base_asphalt_ao.png",
+                "aoBaseTexSize": 4096,
+                "aoDetailTex": "/levels/italy/art/terrains/t_asphalt_02_ao.png",
+                "aoMacroTex": "/levels/italy/art/terrains/t_macro_asphalt_ao.png",
+                "aoMacroTexSize": 80,
+                "baseColorBaseTex": "/levels/italy/art/terrains/t_terrain_base_asphalt_b.png",
+                "baseColorBaseTexSize": 4096,
+                "baseColorDetailStrength": [0.4, 0.0],
+                "baseColorDetailTex": "/levels/italy/art/terrains/t_asphalt_02_b.png",
+                "baseColorMacroStrength": [0.3, 0.3],
+                "baseColorMacroTex": "/levels/italy/art/terrains/t_macro_asphalt_b.png",
+                "baseColorMacroTexSize": 80,
+                "groundmodelName": "ASPHALT",
+                "heightBaseTex": "/levels/italy/art/terrains/t_terrain_base_asphalt_h.png",
+                "heightBaseTexSize": 4096,
+                "heightDetailTex": "/levels/italy/art/terrains/t_asphalt_02_h.png",
+                "heightMacroTex": "/levels/italy/art/terrains/t_macro_asphalt_h.png",
+                "heightMacroTexSize": 80,
+                "macroDistances": [0, 10, 100, 3000],
+                "normalBaseTex": "/levels/italy/art/terrains/t_terrain_base_asphalt_nm.png",
+                "normalBaseTexSize": 4096,
+                "normalDetailStrength": [0.6, 0.2],
+                "normalDetailTex": "/levels/italy/art/terrains/t_asphalt_02_nm.png",
+                "normalMacroStrength": [0.8, 0.8],
+                "normalMacroTex": "/levels/italy/art/terrains/t_macro_asphalt_nm.png",
+                "normalMacroTexSize": 80,
+                "roughnessBaseTex": "/levels/italy/art/terrains/t_terrain_base_asphalt_r.png",
+                "roughnessBaseTexSize": 4096,
+                "roughnessDetailStrength": [0.7, 0.5],
+                "roughnessDetailTex": "/levels/italy/art/terrains/t_asphalt_02_r.png",
+                "roughnessMacroStrength": [0.7, 0.7],
+                "roughnessMacroTex": "/levels/italy/art/terrains/t_macro_asphalt_r.png",
+                "roughnessMacroTexSize": 80
+            },
+            "grass": {
+                "internalName": "grass",
+                "class": "TerrainMaterial",
+                "persistentId": "684557ac-f564-407e-8316-e948bb59bc3",
+                "annotation": "GRASS",
+                "aoBaseTex": "/levels/italy/art/terrains/t_terrain_base_ao.png",
+                "aoBaseTexSize": 4096,
+                "aoDetailTex": "/levels/italy/art/terrains/t_dirt_dry_grassy_ao.png",
+                "aoMacroTex": "/levels/italy/art/terrains/t_macro_grass2_ao.png",
+                "aoMacroTexSize": 80,
+                "baseColorBaseTex": "/levels/italy/art/terrains/t_terrain_base_b.png",
+                "baseColorBaseTexSize": 4096,
+                "baseColorDetailStrength": [0.3, 0.3],
+                "baseColorDetailTex": "/levels/italy/art/terrains/t_dirt_dry_grassy_b.png",
+                "baseColorMacroStrength": [0.2, 0.2],
+                "baseColorMacroTex": "/levels/italy/art/terrains/t_macro_grass2_b.png",
+                "baseColorMacroTexSize": 80,
+                "detailDistance": 80,
+                "detailDistances": [0, 0, 15, 30],
+                "detailSize": 2,
+                "detailStrength": 0.6,
+                "diffuseSize": 4096,
+                "groundmodelName": "GRASS2",
+                "heightBaseTex": "/levels/italy/art/terrains/t_terrain_base_h.png",
+                "heightBaseTexSize": 4096,
+                "heightDetailTex": "/levels/italy/art/terrains/t_dirt_dry_grassy_h.png",
+                "heightMacroTex": "/levels/italy/art/terrains/t_macro_grass2_h.png",
+                "heightMacroTexSize": 80,
+                "macroDistAtten": [0.5, 0],
+                "macroDistance": 800,
+                "macroDistances": [0, 100, 200, 3000],
+                "macroSize": 80,
+                "macroStrength": 0.15,
+                "normalBaseTex": "/levels/italy/art/terrains/t_terrain_base_nm.png",
+                "normalBaseTexSize": 4096,
+                "normalDetailStrength": [1.0, 0.15],
+                "normalDetailTex": "/levels/italy/art/terrains/t_dirt_dry_grassy_nm.png",
+                "normalMacroStrength": [0.5, 0.5],
+                "normalMacroTex": "/levels/italy/art/terrains/t_macro_grass2_nm.png",
+                "normalMacroTexSize": 80,
+                "roughnessBaseTex": "/levels/italy/art/terrains/t_terrain_base_r.png",
+                "roughnessBaseTexSize": 4096,
+                "roughnessDetailStrength": [0.3, 0.3],
+                "roughnessDetailTex": "/levels/italy/art/terrains/t_dirt_dry_grassy_r.png",
+                "roughnessMacroStrength": [0.15, 0.5],
+                "roughnessMacroTex": "/levels/italy/art/terrains/t_macro_grass2_r.png",
+                "roughnessMacroTexSize": 80
+            }
         }
-        (level_dir / "main.materials.json").write_text(json.dumps(materials_json, indent=2))
+        terrains_dir = level_dir / "art" / "terrains"
+        terrains_dir.mkdir(parents=True)
+        (terrains_dir / "main.materials.json").write_text(json.dumps(materials_json, indent=2))
 
-        # 6. Create items.level.json (LDJSON) - NO Environment group (that's in main/Environment/items.level.json)
-        items_lines = []
+        # 6. Create items.level.json (LDJSON) - MissionGroup root
+        # levels/test_level/main/items.level.json
+        main_items = [
+            json.dumps({
+                "class": "SimGroup",
+                "name": "MissionGroup",
+                "persistentId": "da0d620a-8dab-43c7-8490-832a7a628088",
+                "enabled": "1"
+            }, separators=(',', ':'))
+        ]
+        (level_dir / "main" / "items.level.json").parent.mkdir(parents=True, exist_ok=True)
+        (level_dir / "main" / "items.level.json").write_text('\n'.join(main_items))
 
-        # MissionGroup
-        items_lines.append(json.dumps({"class": "SimGroup", "name": "MissionGroup"}, separators=(',', ':')))
+        # levels/test_level/main/MissionGroup/items.level.json
+        mg_items = [
+            json.dumps({
+                "class": "SimGroup",
+                "name": "Level_objects",
+                "__parent": "MissionGroup",
+                "persistentId": "da0d620a-8dab-43c7-8490-832a7a628089"
+            }, separators=(',', ':')),
+            json.dumps({
+                "class": "SimGroup",
+                "name": "Spawnpoints",
+                "__parent": "MissionGroup",
+                "persistentId": "da0d620a-8dab-43c7-8490-832a7a628090"
+            }, separators=(',', ':')),
+            json.dumps({
+                "class": "SimGroup",
+                "name": "Roads",
+                "__parent": "MissionGroup",
+                "persistentId": "da0d620a-8dab-43c7-8490-832a7a628091"
+            }, separators=(',', ':')),
+            json.dumps({
+                "class": "SimGroup",
+                "name": "AI",
+                "__parent": "MissionGroup",
+                "persistentId": "da0d620a-8dab-43c7-8490-832a7a628092"
+            }, separators=(',', ':'))
+        ]
+        (level_dir / "main" / "MissionGroup" / "items.level.json").parent.mkdir(parents=True, exist_ok=True)
+        (level_dir / "main" / "MissionGroup" / "items.level.json").write_text('\n'.join(mg_items))
 
-        # TerrainBlock
-        items_lines.append(json.dumps({
-            "class": "TerrainBlock",
-            "name": "Terrain",
-            "position": "0 0 0",
-            "rotation": "0 0 0 1",
-            "scale": "1 1 1",
-            "terrainFile": f"{level_name}.ter",
-            "squareSize": 2.0,
-            "maxHeight": 100.0,
-            "materials": "asphalt,grass",
-        }, separators=(',', ':')))
+        # levels/test_level/main/MissionGroup/Level_objects/items.level.json
+        lo_items = [
+            json.dumps({
+                "class": "TerrainBlock",
+                "name": "Terrain",
+                "position": "0 0 0",
+                "rotation": "0 0 0 1",
+                "scale": "1 1 1",
+                "terrainFile": f"/levels/{level_name}/{level_name}.ter",
+                "squareSize": 2.0,
+                "maxHeight": 100.0,
+                "materialTextureSet": "testLevelTerrainMaterialTextureSet",
+                "__parent": "Level_objects",
+                "persistentId": "da0d620a-8dab-43c7-8490-832a7a628093"
+            }, separators=(',', ':')),
+            json.dumps({
+                "class": "LevelInfo",
+                "name": "theLevelInfo",
+                "__parent": "Level_objects",
+                "globalEnviromentMap": "BNG_Sky_02_cubemap",
+                "persistentId": "da0d620a-8dab-43c7-8490-832a7a628094"
+            }, separators=(',', ':')),
+            json.dumps({
+                "name": "sunsky",
+                "class": "ScatterSky",
+                "__parent": "Level_objects",
+                "persistentId": "da0d620a-8dab-43c7-8490-832a7a628095",
+                "position": [0.0, 0.0, 100.0],
+                "azimuth": 45.0,
+                "elevation": 55.0,
+                "skyBrightness": 40.0,
+                "ambientScale": [1.0, 0.9, 0.8, 1.0],
+                "sunScale": [1.0, 0.9, 0.8, 1.0],
+                "fogScale": [0.4, 0.67, 1.0, 1.0],
+                "shadowDistance": 1000.0,
+                "shadowSoftness": 0.2,
+                "flareType": "BNG_Sunflare_3",
+                "flareScale": 3.0,
+                "texSize": 1024,
+                "ambientScaleGradientFile": "art/sky_gradients/default/gradient_ambient.png",
+                "sunScaleGradientFile": "art/sky_gradients/default/gradient_sunscale.png",
+                "fogScaleGradientFile": "art/sky_gradients/default/gradient_fog.png"
+            }, separators=(',', ':')),
+            json.dumps({
+                "name": "tod",
+                "class": "TimeOfDay",
+                "__parent": "Level_objects",
+                "persistentId": "da0d620a-8dab-43c7-8490-832a7a628096",
+                "position": [0.0, 0.0, 100.0],
+                "animate": "0",
+                "play": False,
+                "axisTilt": 20.0,
+                "azimuthOverride": 0.0,
+                "startTime": 0.92,
+                "time": 0.92
+            }, separators=(',', ':'))
+        ]
+        (level_dir / "main" / "MissionGroup" / "Level_objects" / "items.level.json").parent.mkdir(parents=True, exist_ok=True)
+        (level_dir / "main" / "MissionGroup" / "Level_objects" / "items.level.json").write_text('\n'.join(lo_items))
 
-        # Roads group
-        items_lines.append(json.dumps({"class": "SimGroup", "name": "Roads"}, separators=(',', ':')))
+        # levels/test_level/main/MissionGroup/Spawnpoints/items.level.json
+        sp_items = [
+            json.dumps({
+                "class": "SpawnSphere",
+                "name": "spawn_001",
+                "position": [0.0, 250.0, 0.5],
+                "dataBlock": "SpawnSphereMarker",
+                "radius": 1,
+                "rotationMatrix": [0.0, 1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 1.0],
+                "spawnClass": "player",
+                "spawnDatablock": "DefaultPlayerData",
+                "sphereWeight": "1",
+                "__parent": "Spawnpoints",
+                "persistentId": "da0d620a-8dab-43c7-8490-832a7a628097"
+            }, separators=(',', ':'))
+        ]
+        (level_dir / "main" / "MissionGroup" / "Spawnpoints" / "items.level.json").parent.mkdir(parents=True, exist_ok=True)
+        (level_dir / "main" / "MissionGroup" / "Spawnpoints" / "items.level.json").write_text('\n'.join(sp_items))
 
-        # TSStatic road chunk (physical mesh) - positioned at Y=250
-        items_lines.append(json.dumps({
-            "class": "TSStatic",
-            "name": "straight_road",
-            "position": "0 250 0",
-            "rotation": "0 0 0 1",
-            "scale": "1 1 1",
-            "shapeName": f"art/shapes/roads/straight_road.dae",
-            "collisionType": "Collision Mesh",
-            "decalType": "None",
-            "playAmbient": True,
-        }, separators=(',', ':')))
+        # levels/test_level/main/MissionGroup/Roads/items.level.json
+        rd_items = [
+            json.dumps({
+                "class": "TSStatic",
+                "name": "straight_road",
+                "position": "0 250 0",
+                "rotation": "0 0 0 1",
+                "scale": "1 1 1",
+                "shapeName": f"/levels/{level_name}/art/shapes/roads/straight_road.dae",
+                "collisionType": "Collision Mesh",
+                "decalType": "None",
+                "playAmbient": True,
+                "__parent": "Roads",
+                "persistentId": "da0d620a-8dab-43c7-8490-832a7a628098"
+            }, separators=(',', ':'))
+        ]
+        (level_dir / "main" / "MissionGroup" / "Roads" / "items.level.json").parent.mkdir(parents=True, exist_ok=True)
+        (level_dir / "main" / "MissionGroup" / "Roads" / "items.level.json").write_text('\n'.join(rd_items))
 
-        # Close Roads
-        items_lines.append(json.dumps({"class": "SimGroupEnd"}, separators=(',', ':')))
-
-        # AI DecalRoad (along X axis, same Y=250 as physical road)
-        items_lines.append(json.dumps({"class": "SimGroup", "name": "AI"}, separators=(',', ':')))
-
+        # levels/test_level/main/MissionGroup/AI/items.level.json
         half_width = 3.5
         decal_nodes = [
             [0.0, 250.0, 0.01, half_width],
             [500.0, 250.0, 0.01, half_width],
         ]
-        items_lines.append(json.dumps({
-            "class": "DecalRoad",
-            "name": "ai_road_001",
-            "position": "0.0 250.0 0.01",
-            "rotation": "0 0 0 1",
-            "scale": "1 1 1",
-            "drivability": 1.0,
-            "oneWay": False,
-            "breakAngle": 180.0,
-            "widthSubdivisions": 1,
-            "textureLength": 5.0,
-            "material": "asphalt",
-            "nodes": decal_nodes,
-            "improvedSpline": True,
-        }, separators=(',', ':')))
-
-        # Close AI
-        items_lines.append(json.dumps({"class": "SimGroupEnd"}, separators=(',', ':')))
-
-        # Spawnpoints (SpawnSphere with SpawnSphereMarker datablock - stock Italy compatible)
-        items_lines.append(json.dumps({"class": "SimGroup", "name": "Spawnpoints"}, separators=(',', ':')))
-
-        items_lines.append(json.dumps({
-            "class": "SpawnSphere",
-            "name": "spawn_001",
-            "position": "0 250 0.5",
-            "rotation": "1 0 0 0",
-            "scale": "1 1 1",
-            "dataBlock": "SpawnSphereMarker",
-            "radius": 1,
-            "rotationMatrix": "0 1 0 0 -1 0 0 0 1",
-            "spawnClass": "player",
-            "spawnDatablock": "DefaultPlayerData",
-            "sphereWeight": "1",
-        }, separators=(',', ':')))
-
-        # Close Spawnpoints
-        items_lines.append(json.dumps({"class": "SimGroupEnd"}, separators=(',', ':')))
-
-        # Close MissionGroup
-        items_lines.append(json.dumps({"class": "SimGroupEnd"}, separators=(',', ':')))
-
-        items_path = level_dir / "main" / "items.level.json"
-        items_path.parent.mkdir(parents=True)
-        items_path.write_text('\n'.join(items_lines))
-
-        # 7. Create main/Environment/items.level.json (ONLY Sky and Sun - no duplication)
-        env_items = [
-            json.dumps({"class": "SimGroup", "name": "Environment"}, separators=(',', ':')),
+        ai_items = [
             json.dumps({
-                "class": "Sky",
-                "name": "Sky",
-                "position": "0 0 0",
+                "class": "DecalRoad",
+                "name": "ai_road_001",
+                "position": "0.0 250.0 0.01",
                 "rotation": "0 0 0 1",
                 "scale": "1 1 1",
-                "material": "sky_material",
-                "useFog": True,
-                "fogColor": "0.5 0.6 0.7 1.0",
-                "fogDistance": 1000.0,
-                "visibleDistance": 2000.0,
-            }, separators=(',', ':')),
-            json.dumps({
-                "class": "Sun",
-                "name": "Sun",
-                "position": "0 0 0",
-                "rotation": "0.7071 0 0.7071 0",
-                "scale": "1 1 1",
-                "color": "1 1 1 1",
-                "ambient": "0.3 0.3 0.3 1",
-                "azimuth": 45.0,
-                "elevation": 45.0,
-            }, separators=(',', ':')),
-            json.dumps({"class": "SimGroupEnd"}, separators=(',', ':')),
+                "drivability": 1.0,
+                "oneWay": False,
+                "breakAngle": 180.0,
+                "widthSubdivisions": 1,
+                "textureLength": 5.0,
+                "material": "asphalt",
+                "nodes": decal_nodes,
+                "improvedSpline": True,
+                "__parent": "AI",
+                "persistentId": "da0d620a-8dab-43c7-8490-832a7a628099"
+            }, separators=(',', ':'))
         ]
-        (level_dir / "main" / "Environment" / "items.level.json").parent.mkdir(parents=True)
-        (level_dir / "main" / "Environment" / "items.level.json").write_text('\n'.join(env_items))
+        (level_dir / "main" / "MissionGroup" / "AI" / "items.level.json").parent.mkdir(parents=True, exist_ok=True)
+        (level_dir / "main" / "MissionGroup" / "AI" / "items.level.json").write_text('\n'.join(ai_items))
 
         # 8. Create preview.png (1x1 placeholder)
         preview_path = level_dir / "preview.png"

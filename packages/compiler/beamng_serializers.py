@@ -15,9 +15,8 @@ class TerWriter:
     - u32: size (heightmap dimension, power of 2)
     - u16[size*size]: heightMap (16-bit unsigned)
     - u8[size*size]: layerMap (8-bit, 255 = hole)
-    - u8[size*size]: layerTextureMap (8-bit)
     - u32: materialCount
-    - materialCount * (u32 length + string): materialNames (length-prefixed UTF-8)
+    - materialCount * (u8 length + string): materialNames (u8 length-prefixed UTF-8)
     """
 
     BINARY_VERSION = 9
@@ -36,15 +35,13 @@ class TerWriter:
         self.max_height = max_height
         self.material_names: List[str] = []
 
-    def write(self, path: Path, height_map: np.ndarray, layer_map: Optional[np.ndarray] = None,
-              layer_texture_map: Optional[np.ndarray] = None):
+    def write(self, path: Path, height_map: np.ndarray, layer_map: Optional[np.ndarray] = None):
         """Write .ter file.
 
         Args:
             path: Output file path
             height_map: 2D array of shape (size, size) with heights in meters
             layer_map: Optional 2D array of shape (size, size) with material indices (0-254, 255=hole)
-            layer_texture_map: Optional 2D array of shape (size, size) with texture layer indices
         """
         if height_map.shape != (self.size, self.size):
             raise ValueError(f"Height map must be {self.size}x{self.size}, got {height_map.shape}")
@@ -54,16 +51,13 @@ class TerWriter:
         elif layer_map.shape != (self.size, self.size):
             raise ValueError(f"Layer map must be {self.size}x{self.size}, got {layer_map.shape}")
 
-        if layer_texture_map is None:
-            layer_texture_map = np.zeros((self.size, self.size), dtype=np.uint8)
-        elif layer_texture_map.shape != (self.size, self.size):
-            raise ValueError(f"Layer texture map must be {self.size}x{self.size}, got {layer_texture_map.shape}")
-
-        # Quantize heights to 16-bit unsigned
-        # Formula: quantized = round((height + max_height) / (2 * max_height) * 65535)
-        # Maps [-max_height, +max_height] to [0, 65535]
+        # Quantize heights to 16-bit unsigned.
+        # .ter height samples are unsigned local heights.
+        # TerrainBlock.position.z supplies the terrain base/world offset.
+        # negative world elevations must be represented through TerrainBlock.position.z, not negative uint16 samples.
+        # Formula: quantized = round(height_map / max_height * 65535)
         quantized = np.clip(
-            np.round((height_map + self.max_height) / (2 * self.max_height) * 65535),
+            np.round(height_map / self.max_height * 65535),
             0, 65535
         ).astype(np.uint16)
 
@@ -80,14 +74,15 @@ class TerWriter:
             # Layer map
             f.write(layer_map.astype(np.uint8).tobytes())
 
-            # Layer texture map (version 9+)
-            f.write(layer_texture_map.astype(np.uint8).tobytes())
-
             # Material count and names
             f.write(struct.pack('<I', len(self.material_names)))
             for name in self.material_names:
                 name_bytes = name.encode('utf-8')
-                f.write(struct.pack('<I', len(name_bytes)))
+                if len(name_bytes) == 0:
+                    raise ValueError(f"Material name cannot be empty, got '{name}'")
+                if len(name_bytes) > 255:
+                    raise ValueError(f"Material name '{name}' exceeds maximum UTF-8 length of 255 bytes ({len(name_bytes)} bytes)")
+                f.write(struct.pack('B', len(name_bytes)))
                 f.write(name_bytes)
 
     def add_material(self, name: str):
@@ -132,7 +127,43 @@ class DaeSerializer:
         ET.SubElement(asset, 'up_axis').text = 'Z_UP'
         ET.SubElement(asset, 'contributor')
 
-        # Library geometries
+        # 1. Library effects
+        lib_fx = ET.SubElement(root, 'library_effects')
+        effect = ET.SubElement(lib_fx, 'effect', {'id': f'{material_name}-fx', 'name': material_name})
+        profile = ET.SubElement(effect, 'profile_COMMON')
+        technique = ET.SubElement(profile, 'technique', {'sid': 'common'})
+        phong = ET.SubElement(technique, 'phong')
+
+        emission = ET.SubElement(phong, 'emission')
+        color = ET.SubElement(emission, 'color', {'sid': 'emission'})
+        color.text = '0 0 0 1'
+
+        ambient = ET.SubElement(phong, 'ambient')
+        color = ET.SubElement(ambient, 'color', {'sid': 'ambient'})
+        color.text = '0.3 0.3 0.3 1'
+
+        diffuse = ET.SubElement(phong, 'diffuse')
+        color = ET.SubElement(diffuse, 'color', {'sid': 'diffuse'})
+        color.text = '0.4 0.4 0.4 1'
+
+        specular = ET.SubElement(phong, 'specular')
+        color = ET.SubElement(specular, 'color', {'sid': 'specular'})
+        color.text = '0.1 0.1 0.1 1'
+
+        shininess = ET.SubElement(phong, 'shininess')
+        float_elem = ET.SubElement(shininess, 'float', {'sid': 'shininess'})
+        float_elem.text = '10'
+
+        transparency = ET.SubElement(phong, 'transparency')
+        float_elem = ET.SubElement(transparency, 'float', {'sid': 'transparency'})
+        float_elem.text = '1'
+
+        # 2. Library materials
+        lib_mat = ET.SubElement(root, 'library_materials')
+        mat = ET.SubElement(lib_mat, 'material', {'id': f'{material_name}-mat', 'name': material_name})
+        ET.SubElement(mat, 'instance_effect', {'url': f'#{material_name}-fx'})
+
+        # 3. Library geometries
         lib_geom = ET.SubElement(root, 'library_geometries')
         geom = ET.SubElement(lib_geom, 'geometry', {'id': f'{mesh_id}-geom', 'name': mesh_id})
         mesh = ET.SubElement(geom, 'mesh')
@@ -186,59 +217,29 @@ class DaeSerializer:
         vertices = ET.SubElement(mesh, 'vertices', {'id': f'{mesh_id}-vertices'})
         ET.SubElement(vertices, 'input', {'semantic': 'POSITION', 'source': f'#{mesh_id}-positions'})
 
-        # Polylist (triangles)
-        polylist = ET.SubElement(mesh, 'polylist', {'material': material_name, 'count': str(len(indices) // 3)})
-        ET.SubElement(polylist, 'input', {'semantic': 'VERTEX', 'source': f'#{mesh_id}-vertices', 'offset': '0'})
-        ET.SubElement(polylist, 'input', {'semantic': 'NORMAL', 'source': f'#{mesh_id}-normals', 'offset': '1'})
-        ET.SubElement(polylist, 'input', {'semantic': 'TEXCOORD', 'source': f'#{mesh_id}-uvs', 'offset': '2', 'set': '0'})
-        vcount = ET.SubElement(polylist, 'vcount')
-        vcount.text = ' '.join(['3'] * (len(indices) // 3))
-        p = ET.SubElement(polylist, 'p')
+        # Triangles
+        triangles = ET.SubElement(mesh, 'triangles', {'material': material_name, 'count': str(len(indices) // 3)})
+        ET.SubElement(triangles, 'input', {'semantic': 'VERTEX', 'source': f'#{mesh_id}-vertices', 'offset': '0'})
+        ET.SubElement(triangles, 'input', {'semantic': 'NORMAL', 'source': f'#{mesh_id}-normals', 'offset': '1'})
+        ET.SubElement(triangles, 'input', {'semantic': 'TEXCOORD', 'source': f'#{mesh_id}-uvs', 'offset': '2', 'set': '0'})
+        p = ET.SubElement(triangles, 'p')
         p.text = ' '.join(f'{idx} {idx} {idx}' for idx in indices)
 
-        # Library materials
-        lib_mat = ET.SubElement(root, 'library_materials')
-        mat = ET.SubElement(lib_mat, 'material', {'id': f'{material_name}-mat', 'name': material_name})
-        ET.SubElement(mat, 'instance_effect', {'url': f'#{material_name}-fx'})
-
-        # Library effects
-        lib_fx = ET.SubElement(root, 'library_effects')
-        effect = ET.SubElement(lib_fx, 'effect', {'id': f'{material_name}-fx', 'name': material_name})
-        profile = ET.SubElement(effect, 'profile_COMMON')
-        technique = ET.SubElement(profile, 'technique', {'sid': 'common'})
-        phong = ET.SubElement(technique, 'phong')
-
-        emission = ET.SubElement(phong, 'emission')
-        color = ET.SubElement(emission, 'color', {'sid': 'emission'})
-        color.text = '0 0 0 1'
-
-        ambient = ET.SubElement(phong, 'ambient')
-        color = ET.SubElement(ambient, 'color', {'sid': 'ambient'})
-        color.text = '0.3 0.3 0.3 1'
-
-        diffuse = ET.SubElement(phong, 'diffuse')
-        color = ET.SubElement(diffuse, 'color', {'sid': 'diffuse'})
-        color.text = '0.4 0.4 0.4 1'
-
-        specular = ET.SubElement(phong, 'specular')
-        color = ET.SubElement(specular, 'color', {'sid': 'specular'})
-        color.text = '0.1 0.1 0.1 1'
-
-        shininess = ET.SubElement(phong, 'shininess')
-        float_elem = ET.SubElement(shininess, 'float', {'sid': 'shininess'})
-        float_elem.text = '10'
-
-        transparency = ET.SubElement(phong, 'transparency')
-        float_elem = ET.SubElement(transparency, 'float', {'sid': 'transparency'})
-        float_elem.text = '1'
-
-        # Scene
-        scene = ET.SubElement(root, 'scene')
-        instance = ET.SubElement(scene, 'instance_visual_scene', {'url': '#VisualScene'})
+        # 4. Library visual scenes
         lib_scene = ET.SubElement(root, 'library_visual_scenes')
         vs = ET.SubElement(lib_scene, 'visual_scene', {'id': 'VisualScene', 'name': 'VisualScene'})
         node = ET.SubElement(vs, 'node', {'id': f'{mesh_id}-node', 'name': mesh_id})
-        ET.SubElement(node, 'instance_geometry', {'url': f'#{mesh_id}-geom'})
+        inst_geom = ET.SubElement(node, 'instance_geometry', {'url': f'#{mesh_id}-geom'})
+        bind_mat = ET.SubElement(inst_geom, 'bind_material')
+        tech_common = ET.SubElement(bind_mat, 'technique_common')
+        ET.SubElement(tech_common, 'instance_material', {
+            'symbol': material_name,
+            'target': f'#{material_name}-mat'
+        })
+
+        # 5. Scene (MUST BE LAST in Collada schema)
+        scene = ET.SubElement(root, 'scene')
+        ET.SubElement(scene, 'instance_visual_scene', {'url': '#VisualScene'})
 
         # Write with stable formatting
         ET.indent(root, space='  ')
@@ -246,16 +247,15 @@ class DaeSerializer:
         tree.write(path, encoding='utf-8', xml_declaration=True)
 
 
-def create_flat_terrain_ter(size: int = 256, square_size: float = 2.0) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def create_flat_terrain_ter(size: int = 256, square_size: float = 2.0) -> Tuple[np.ndarray, np.ndarray]:
     """Create a flat terrain at elevation 0.
 
     Returns:
-        (height_map, layer_map, layer_texture_map)
+        (height_map, layer_map)
     """
     height_map = np.zeros((size, size), dtype=np.float32)
     layer_map = np.zeros((size, size), dtype=np.uint8)
-    layer_texture_map = np.zeros((size, size), dtype=np.uint8)
-    return height_map, layer_map, layer_texture_map
+    return height_map, layer_map
 
 
 def create_straight_road_dae(
@@ -263,7 +263,7 @@ def create_straight_road_dae(
     mesh_id: str,
     length: float = 500.0,
     width: float = 7.0,
-    material_name: str = "asphalt",
+    material_name: str = "triworld_road_asphalt",
 ) -> dict:
     """Create a straight road DAE along X axis centered at origin.
 
@@ -289,12 +289,14 @@ def create_straight_road_dae(
         [0.0, 0.0, 1.0],
     ]
 
-    # UVs: map along length and width
+    # UVs: map along length and width, tiling every 7 meters
+    u_max = width / 7.0
+    v_max = length / 7.0
     uvs = [
         [0.0, 0.0],
-        [1.0, 0.0],
-        [1.0, 1.0],
-        [0.0, 1.0],
+        [u_max, 0.0],
+        [u_max, v_max],
+        [0.0, v_max],
     ]
 
     # Two triangles

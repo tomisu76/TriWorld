@@ -1,40 +1,54 @@
-# TriWorld — Hermes documentation router
+# TriWorld documentation router
 
-This file tells Hermes where to find information. It is not a greenfield
-bootstrap prompt and does not reset the current implementation phase.
+This router is valid for the complete project lifecycle. It explains where
+information belongs; it never defines the current phase.
 
-## Continue an existing session
+## Start or resume work
 
 Always begin with:
 
 1. `docs/CURRENT_HANDOFF.md`
 2. `docs/hints/HERMES_VERIFICATION_RULES.md`
-3. current Git HEAD and working-tree status
+3. current Git HEAD, status, and relevant diff
 
-Continue only from the milestone recorded in the handoff. If the handoff is
-stale or conflicts with Git/runtime evidence, report the conflict before making
-changes.
+The handoff is a checkpoint, not unquestionable truth. Reconcile it with Git,
+immutable artifact hashes, test output, installed files, and runtime logs before
+making consequential changes.
 
-## Read documentation progressively
+## Authority and document roles
 
-Load only what the current task needs:
+| Need | Authoritative location |
+|---|---|
+| Current task, blocker, artifact and next action | `docs/CURRENT_HANDOFF.md` |
+| Implemented capabilities and verification depth | `docs/implementation-status.md` |
+| Evidence vocabulary and truth rules | `docs/hints/HERMES_VERIFICATION_RULES.md` |
+| Product goal and long-term architecture | `HERMES_TRIWORLD_MASTER_PROMPT_2026.md` |
+| Practical implementation traps | `docs/hints/HERMES_EXECUTION_HINTS.md` |
+| ADRs and architectural decisions | `docs/adr/` |
+| Operations, gates, risks and test matrix | `docs/operations/` |
+| Reusable research playbooks and templates | `docs/resources/` |
+| Project-specific research evidence | `docs/research/` |
+| Runtime/build evidence | `artifacts/evidence/` and the paths named in the handoff |
+| Historical Phase 1 plan | `PHASE1_PLAN.md` |
 
-- Architecture and long-term product definition:
-  `HERMES_TRIWORLD_MASTER_PROMPT_2026.md`
-- Practical implementation traps:
-  `docs/hints/HERMES_EXECUTION_HINTS.md`
-- Research process and primary sources:
-  `docs/resources/README.md`
-- Operations, gates, and risks:
-  `docs/operations/`
-- Contracts and ADRs:
-  `packages/contracts/` and `docs/adr/`
-- Current implementation inventory:
-  `docs/implementation-status.md`
+The master prompt includes original greenfield material. Read only sections
+relevant to the current task. Historical plans never override the handoff.
 
-The master prompt contains historical greenfield and Phase 0/1 instructions.
-Those sections apply only when explicitly requested for a new repository. They
-must not be interpreted as the next action in this existing repository.
+## Task routing
+
+- Research or uncertain external formats: begin with
+  `docs/resources/RESEARCH_PLAYBOOK.md` and primary sources.
+- BeamNG packaging/runtime: use
+  `docs/resources/BEAMNG_RUNTIME_CHECKLIST.md`.
+- GIS/DEM/OSM/SUMO work: use the relevant contracts, ADRs, and
+  `docs/resources/SUMO_GIS_QA_CHECKLIST.md`.
+- Architecture changes: inspect existing ADRs and add or supersede an ADR.
+- Release work: inspect operations, risk register, version lock, provenance,
+  licenses, reproducibility, and runtime evidence.
+
+Web research, subagents, NotebookLM, Blender, SUMO, and other tools are selected
+only when useful to the current task. Their mention in a playbook is not a command
+to invoke all of them in every session.
 
 ## Before editing
 
@@ -42,39 +56,45 @@ must not be interpreted as the next action in this existing repository.
 Set-Location -LiteralPath 'C:\TriWorld'
 git status --short --branch
 git rev-parse HEAD
+git diff --stat
 ```
 
-Preserve dirty and untracked user files. Do not expose secret values, clear
-BeamNG caches, overwrite installed mods, terminate BeamNG, or manually patch a
-generated ZIP unless the user explicitly authorizes that exact action.
+Preserve dirty and untracked user work. Inspect overlapping modifications before
+editing. Do not regenerate, install, launch, terminate, clear, commit, or push
+merely because an older report describes that action.
 
 ## Evidence discipline
 
-Separate these states:
+Use only the states defined by the verification rules, including:
 
-- implemented
-- unit tested
-- statically validated
-- stock compared
-- integration tested
-- runtime verified
-- visually inspected
-- not yet proven
+- implemented;
+- unit tested;
+- statically validated;
+- integration tested;
+- runtime verified;
+- visually inspected;
+- not yet proven.
 
-Passing unit/static tests does not prove BeamNG compatibility. A changed ZIP
-must have a changed SHA-256 and must be treated as a new artifact.
+Always attach scope: exact artifact, SHA-256, target version, environment, command,
+and date where relevant. Static PASS is never converted into runtime PASS.
 
-## Updating the continuation checkpoint
+## Maintaining continuity
 
-Before handing work to another session, update `docs/CURRENT_HANDOFF.md` with:
+`docs/CURRENT_HANDOFF.md` must remain short and current. Replace superseded facts
+instead of retaining a diary. It must contain:
 
-- exact HEAD and branch;
-- dirty/untracked files;
-- immutable artifact paths and SHA-256;
-- commands actually executed;
-- proven and unproven results;
-- current blocker;
-- files that must not be modified;
-- one next falsifiable action.
+- goal and current phase/gate;
+- exact Git and working-tree state;
+- last runtime-proven baseline;
+- newest implemented/static candidate, if different;
+- commands and results actually observed;
+- immutable artifact identities;
+- current blocker and unproven claims;
+- files or evidence that must be preserved;
+- exactly one recommended next falsifiable action.
 
-Do not place a one-time task prompt in `.hermes.md` or this file.
+`docs/implementation-status.md` is not a session log. Update its capability matrix
+and verification levels when evidence changes.
+
+When the product is complete, the handoff becomes a release/maintenance
+checkpoint rather than restarting the implementation plan.
