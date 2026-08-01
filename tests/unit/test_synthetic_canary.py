@@ -31,11 +31,27 @@ def test_create_synthetic_canary():
             assert "levels/test_level/main/items.level.json" in namelist
             assert "levels/test_level/main/MissionGroup/items.level.json" in namelist
             assert "levels/test_level/main/MissionGroup/Level_objects/items.level.json" in namelist
-            assert "levels/test_level/main/MissionGroup/Spawnpoints/items.level.json" in namelist
+            assert "levels/test_level/main/MissionGroup/PlayerDropPoints/items.level.json" in namelist
+            assert "levels/test_level/main/MissionGroup/Spawnpoints/items.level.json" not in namelist
+            assert "levels/test_level/main/MissionGroup/spawnpoints/items.level.json" not in namelist
             assert "levels/test_level/main/MissionGroup/Roads/items.level.json" in namelist
             assert "levels/test_level/main/MissionGroup/AI/items.level.json" in namelist
             assert "levels/test_level/reports/build-manifest.json" in namelist
             assert "levels/test_level/reports/validation.json" in namelist
+
+            # Check MissionGroup items.level.json for PlayerDropPoints SimGroup
+            mg_content = zf.read("levels/test_level/main/MissionGroup/items.level.json").decode("utf-8")
+            assert '"name":"PlayerDropPoints"' in mg_content or '"name": "PlayerDropPoints"' in mg_content
+            assert '"name":"Spawnpoints"' not in mg_content and '"name": "Spawnpoints"' not in mg_content
+            assert '"name":"spawnpoints"' not in mg_content and '"name": "spawnpoints"' not in mg_content
+
+            # Check PlayerDropPoints/items.level.json for SpawnSphere
+            pdp_content = zf.read("levels/test_level/main/MissionGroup/PlayerDropPoints/items.level.json").decode("utf-8")
+            pdp_obj = json.loads(pdp_content)
+            assert pdp_obj["class"] == "SpawnSphere"
+            assert pdp_obj["name"] == "spawn_001"
+            assert pdp_obj["__parent"] == "PlayerDropPoints"
+            assert pdp_obj["position"] == [50.0, 250.0, 0.5]
             
             # Validate JSON files
             info_json = json.loads(zf.read("levels/test_level/info.json"))

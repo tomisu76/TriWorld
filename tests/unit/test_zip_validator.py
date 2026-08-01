@@ -1886,3 +1886,80 @@ def test_collada_instance_material_target_mismatch_fails(tmp_path):
     dae_check = next(c for c in report.checks if c.check_name == "dae_material_linking")
     assert not dae_check.passed
     assert "Collada instance_material target mismatch" in dae_check.message
+
+
+def test_stock_texture_png_link_resolution_passes(tmp_path):
+    zip_path = tmp_path / "png_link.zip"
+    valid_zip = tmp_path / "valid.zip"
+    create_synthetic_canary(valid_zip, "test_level")
+    with zipfile.ZipFile(valid_zip, 'r') as zf_in, zipfile.ZipFile(zip_path, 'w') as zf_out:
+        for item in zf_in.infolist():
+            content = zf_in.read(item.filename)
+            if "art/shapes/roads/main.materials.json" in item.filename:
+                mat_data = json.loads(content)
+                mat_data["triworld_road_asphalt"]["Stages"][0]["baseColorMap"] = "/levels/italy/art/terrains/test_texture.png"
+                mat_data["triworld_road_asphalt"]["Stages"][0]["normalMap"] = "/levels/italy/art/terrains/test_normal.png"
+                mat_data["triworld_road_asphalt"]["Stages"][0]["roughnessMap"] = "/levels/italy/art/terrains/test_roughness.png"
+                content = json.dumps(mat_data).encode('utf-8')
+            zf_out.writestr(item, content)
+    stock_assets = set([
+        "levels/italy/art/terrains/test_texture.png.link",
+        "levels/italy/art/terrains/test_normal.png.link",
+        "levels/italy/art/terrains/test_roughness.png.link",
+        "levels/italy/art/terrains/t_terrain_base_asphalt_ao.png",
+        "levels/italy/art/terrains/t_asphalt_02_ao.png",
+        "levels/italy/art/terrains/t_macro_asphalt_ao.png",
+        "levels/italy/art/terrains/t_terrain_base_asphalt_b.png",
+        "levels/italy/art/terrains/t_asphalt_02_b.png",
+        "levels/italy/art/terrains/t_macro_asphalt_b.png",
+        "levels/italy/art/terrains/t_terrain_base_asphalt_h.png",
+        "levels/italy/art/terrains/t_asphalt_02_h.png",
+        "levels/italy/art/terrains/t_macro_asphalt_h.png",
+        "levels/italy/art/terrains/t_terrain_base_asphalt_nm.png",
+        "levels/italy/art/terrains/t_asphalt_02_nm.png",
+        "levels/italy/art/terrains/t_macro_asphalt_nm.png",
+        "levels/italy/art/terrains/t_terrain_base_asphalt_r.png",
+        "levels/italy/art/terrains/t_asphalt_02_r.png",
+        "levels/italy/art/terrains/t_macro_asphalt_r.png",
+        "levels/italy/art/terrains/t_terrain_base_ao.png",
+        "levels/italy/art/terrains/t_dirt_dry_grassy_ao.png.link",
+        "levels/italy/art/terrains/t_macro_grass2_ao.png",
+        "levels/italy/art/terrains/t_terrain_base_b.png",
+        "levels/italy/art/terrains/t_dirt_dry_grassy_b.png.link",
+        "levels/italy/art/terrains/t_macro_grass2_b.png",
+        "levels/italy/art/terrains/t_terrain_base_h.png",
+        "levels/italy/art/terrains/t_dirt_dry_grassy_h.png.link",
+        "levels/italy/art/terrains/t_macro_grass2_h.png",
+        "levels/italy/art/terrains/t_terrain_base_nm.png",
+        "levels/italy/art/terrains/t_dirt_dry_grassy_nm.png.link",
+        "levels/italy/art/terrains/t_macro_grass2_nm.png",
+        "levels/italy/art/terrains/t_terrain_base_r.png",
+        "levels/italy/art/terrains/t_dirt_dry_grassy_r.png.link",
+        "levels/italy/art/terrains/t_macro_grass2_r.png"
+    ])
+    report = validate_zip_structure(zip_path, stock_assets=stock_assets)
+    tex_check = next(c for c in report.checks if c.check_name == "material_textures")
+    assert tex_check.passed, f"Expected material_textures to pass with .png.link in stock_assets: {tex_check.message}"
+
+
+def test_genuinely_missing_stock_texture_fails(tmp_path):
+    zip_path = tmp_path / "genuinely_missing.zip"
+    valid_zip = tmp_path / "valid.zip"
+    create_synthetic_canary(valid_zip, "test_level")
+    with zipfile.ZipFile(valid_zip, 'r') as zf_in, zipfile.ZipFile(zip_path, 'w') as zf_out:
+        for item in zf_in.infolist():
+            content = zf_in.read(item.filename)
+            if "art/shapes/roads/main.materials.json" in item.filename:
+                mat_data = json.loads(content)
+                mat_data["triworld_road_asphalt"]["Stages"][0]["baseColorMap"] = "/levels/italy/art/terrains/completely_missing_texture.png"
+                content = json.dumps(mat_data).encode('utf-8')
+            zf_out.writestr(item, content)
+    stock_assets = set([
+        "levels/italy/art/terrains/t_asphalt_02_b.png",
+        "levels/italy/art/terrains/t_asphalt_02_nm.png",
+        "levels/italy/art/terrains/t_asphalt_02_r.png"
+    ])
+    report = validate_zip_structure(zip_path, stock_assets=stock_assets)
+    tex_check = next(c for c in report.checks if c.check_name == "material_textures")
+    assert not tex_check.passed
+    assert "completely_missing_texture.png" in str(tex_check.details.get("missing", []))

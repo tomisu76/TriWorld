@@ -239,7 +239,7 @@ def create_synthetic_canary(output_zip: Path, level_name: str = "synthetic_canar
             }, separators=(',', ':')),
             json.dumps({
                 "class": "SimGroup",
-                "name": "Spawnpoints",
+                "name": "PlayerDropPoints",
                 "__parent": "MissionGroup",
                 "persistentId": "da0d620a-8dab-43c7-8490-832a7a628090"
             }, separators=(',', ':')),
@@ -319,24 +319,24 @@ def create_synthetic_canary(output_zip: Path, level_name: str = "synthetic_canar
         (level_dir / "main" / "MissionGroup" / "Level_objects" / "items.level.json").parent.mkdir(parents=True, exist_ok=True)
         (level_dir / "main" / "MissionGroup" / "Level_objects" / "items.level.json").write_text('\n'.join(lo_items))
 
-        # levels/test_level/main/MissionGroup/Spawnpoints/items.level.json
+        # levels/test_level/main/MissionGroup/PlayerDropPoints/items.level.json
         sp_items = [
             json.dumps({
                 "class": "SpawnSphere",
                 "name": "spawn_001",
-                "position": [0.0, 250.0, 0.5],
+                "position": [50.0, 250.0, 0.5],
                 "dataBlock": "SpawnSphereMarker",
                 "radius": 1,
                 "rotationMatrix": [0.0, 1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 1.0],
                 "spawnClass": "player",
                 "spawnDatablock": "DefaultPlayerData",
                 "sphereWeight": "1",
-                "__parent": "Spawnpoints",
+                "__parent": "PlayerDropPoints",
                 "persistentId": "da0d620a-8dab-43c7-8490-832a7a628097"
             }, separators=(',', ':'))
         ]
-        (level_dir / "main" / "MissionGroup" / "Spawnpoints" / "items.level.json").parent.mkdir(parents=True, exist_ok=True)
-        (level_dir / "main" / "MissionGroup" / "Spawnpoints" / "items.level.json").write_text('\n'.join(sp_items))
+        (level_dir / "main" / "MissionGroup" / "PlayerDropPoints" / "items.level.json").parent.mkdir(parents=True, exist_ok=True)
+        (level_dir / "main" / "MissionGroup" / "PlayerDropPoints" / "items.level.json").write_text('\n'.join(sp_items))
 
         # levels/test_level/main/MissionGroup/Roads/items.level.json
         rd_items = [

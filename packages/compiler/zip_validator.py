@@ -925,7 +925,7 @@ def validate_zip_structure(zip_path: Path, stock_assets: Optional[set] = None) -
                                 if stock_assets is not None:
                                     # Normalize path for check
                                     normalized = tval.lstrip('/')
-                                    if normalized not in stock_assets:
+                                    if normalized not in stock_assets and (normalized + ".link") not in stock_assets:
                                         missing_textures.append(tval)
 
                     elif cls == 'Material':
@@ -957,7 +957,7 @@ def validate_zip_structure(zip_path: Path, stock_assets: Optional[set] = None) -
                                     if isinstance(tval, str) and (tval.endswith('.png') or tval.endswith('.jpg') or tval.endswith('.dds')):
                                         if stock_assets is not None:
                                             normalized = tval.lstrip('/')
-                                            if normalized not in stock_assets:
+                                            if normalized not in stock_assets and (normalized + ".link") not in stock_assets:
                                                 missing_textures.append(tval)
 
             except Exception as e:
