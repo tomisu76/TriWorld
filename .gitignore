@@ -28,6 +28,8 @@ Thumbs.db
 *.zip
 dist/
 build/
+node_modules/
+runtime_jobs/
 *.egg-info/
 
 # Artifacts and evidence (generated, not committed)
