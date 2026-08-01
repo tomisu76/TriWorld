@@ -68,6 +68,7 @@ def test_create_synthetic_canary():
             validation_json = json.loads(zf.read("levels/test_level/reports/validation.json"))
             assert validation_json["structural_validation"] == "passed"
             assert validation_json["beamng_runtime_validation"] == "not_run"
+            assert validation_json["metrics"]["terrainSize"] == 512
             # Gates: some are not_applicable for synthetic canary, some passed
             assert validation_json["gates"]["terrain"] == "passed"
             assert validation_json["gates"]["beamngTarget"] == "passed"
@@ -83,4 +84,23 @@ def test_create_synthetic_canary():
             assert manifest["compilerVersion"] == "0.1.0"
             assert manifest["seed"] == 184467
             assert manifest["projection"]["crs"] == "LOCAL"
-            assert manifest["projection"]["squareSize"] == 2.0
+            assert manifest["projection"]["squareSize"] == 1.0
+
+            # Verify TerrainBlock item squareSize = 1.0 and worldBlockSize = 512.0
+            lo_content = zf.read("levels/test_level/main/MissionGroup/Level_objects/items.level.json").decode("utf-8")
+            tb_obj = [json.loads(line) for line in lo_content.split('\n') if line.strip() and json.loads(line).get("class") == "TerrainBlock"][0]
+            assert tb_obj["squareSize"] == 1.0
+            # Verify .ter header size = 512
+            ter_bytes = zf.read("levels/test_level/test_level.ter")
+            import struct
+            ter_size = struct.unpack('<I', ter_bytes[1:5])[0]
+            assert ter_size == 512
+            world_block_size = ter_size * tb_obj["squareSize"]
+            assert world_block_size == 512.0
+
+            # Verify AI DecalRoad nodes X=0..500
+            ai_content = zf.read("levels/test_level/main/MissionGroup/AI/items.level.json").decode("utf-8")
+            ai_obj = json.loads(ai_content)
+            assert ai_obj["class"] == "DecalRoad"
+            assert ai_obj["nodes"][0][0] == 0.0
+            assert ai_obj["nodes"][1][0] == 500.0

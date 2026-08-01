@@ -41,10 +41,10 @@ def create_synthetic_canary(output_zip: Path, level_name: str = "synthetic_canar
 
         # 1. Create flat terrain .ter (version 9 without layerTextureMap)
         ter_path = level_dir / f"{level_name}.ter"
-        writer = TerWriter(size=256, square_size=2.0, max_height=100.0)
+        writer = TerWriter(size=512, square_size=1.0, max_height=100.0)
         writer.add_material("asphalt")
         writer.add_material("grass")
-        height_map, layer_map = create_flat_terrain_ter(256)
+        height_map, layer_map = create_flat_terrain_ter(512)
         writer.write(ter_path, height_map, layer_map)
 
         # 2. Create terrain metadata .terrain.json (version 9)
@@ -52,12 +52,12 @@ def create_synthetic_canary(output_zip: Path, level_name: str = "synthetic_canar
             "binaryFormat": "version(char), size(unsigned int), heightMap(heightMapSize * heightMapItemSize), layerMap(layerMapSize * layerMapItemSize), materialNames",
             "datafile": f"/levels/{level_name}/{level_name}.ter",
             "heightMapItemSize": 2,
-            "heightMapSize": 65536,
+            "heightMapSize": 262144,
             "heightmapImage": f"/levels/{level_name}/{level_name}.terrainheightmap.png",
             "layerMapItemSize": 1,
-            "layerMapSize": 65536,
+            "layerMapSize": 262144,
             "materials": ["asphalt", "grass"],
-            "size": 256,
+            "size": 512,
             "version": 9,
         }
         (level_dir / f"{level_name}.terrain.json").write_text(json.dumps(terrain_json, indent=2))
@@ -268,7 +268,7 @@ def create_synthetic_canary(output_zip: Path, level_name: str = "synthetic_canar
                 "rotation": "0 0 0 1",
                 "scale": "1 1 1",
                 "terrainFile": f"/levels/{level_name}/{level_name}.ter",
-                "squareSize": 2.0,
+                "squareSize": 1.0,
                 "maxHeight": 100.0,
                 "materialTextureSet": "testLevelTerrainMaterialTextureSet",
                 "__parent": "Level_objects",
@@ -440,7 +440,7 @@ def create_synthetic_canary(output_zip: Path, level_name: str = "synthetic_canar
             "projection": {
                 "crs": "LOCAL",
                 "anchorLonLat": [0.0, 0.0],
-                "squareSize": 2.0,
+                "squareSize": 1.0,
             },
             "sumoCommand": [],
             "seed": 184467,
@@ -468,7 +468,7 @@ def create_synthetic_canary(output_zip: Path, level_name: str = "synthetic_canar
                 ".ter writer and DAE serializer are experimental until runtime validation",
             ],
             "metrics": {
-                "terrainSize": 256,
+                "terrainSize": 512,
                 "roadLengthM": 500.0,
                 "roadWidthM": 7.0,
                 "triangles": 2,
@@ -492,7 +492,7 @@ def create_synthetic_canary(output_zip: Path, level_name: str = "synthetic_canar
             f"Purpose: Pipeline validation\n"
             f"\n"
             f"Contents:\n"
-            f"- Flat terrain (256x256, 2m resolution, version 9)\n"
+            f"- Flat terrain (512x512, 1m resolution, version 9)\n"
             f"- Straight road (500m x 7m)\n"
             f"- TSStatic physical road mesh\n"
             f"- AI DecalRoad centerline\n"
